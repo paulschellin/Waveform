@@ -13,7 +13,7 @@
 		
 		Safety:
  [ ] Unit testing.
- [ ] Implement better range checking. (how do iterators impact this?)
+ [ ] Implement better range checking. (how will the monitoring iterators impact this?)
  [ ] Use exceptions and make sure memory checks are made.
  
  
@@ -50,7 +50,7 @@
 		  - After default construction: either can be modified since one does
 				depend on the values of the other 
  
- [x] Consider changing "fourier_" to be a shared_ptr. "reset()" can be called on
+ [x] Consider changing "transform_" to be a shared_ptr. "reset()" can be called on
 		the shared_ptr to allow the assignment operator (as well as domain
 		container Setter functions) to modify a Waveform object's size, etc.
 		instead of needing to start with a newly constructed Waveform object.
@@ -77,19 +77,22 @@
 		shared_array<> or something similar.
  
  
- [ ] To keep the header file small, it may make sense to move the definition and
+ [x] To keep the header file small, it may make sense to move the definition and
 		development of the monitoring/proxy/observer smart pointer template to
 		its own header file, perhaps along with the iterators.
 
  [ ] Perhaps transition from the ...USE_SHARED_PTR macro and check if __cplusplus
  		is greater than 199711L?
 
+ [ ] Determine if it is better to use a "flat" template parameter for the container
+ 		types or if nesting (i.e. template < template <typename...> class ContainerT, ...).
+		It maybe be wise to use static asserts as well.
+
  */
 
 #ifndef WAVEFORM_HPP
 #define WAVEFORM_HPP 1
 
-#define WAVEFORM_USE_SHARED_PTR 1
 #define WAVEFORM_USE_BOOST_SHARED_PTR 1
 
 
@@ -128,15 +131,8 @@
 #include <boost/operators.hpp>
 
 
-// FFTW header files
-#include <fftw3.h>
+#include <boost/range.hpp>
 
-// Other header files
-#include <FftwDft1d/FftwDft1d.hpp>
-
-#ifdef WAVEFORM_WRAP_DISCRETESERIES_ALIGNED_ALLOC
-#include <DiscreteSeries/DiscreteSeries.hpp>
-#endif
 
 /*!
  *	\addtogroup PS
@@ -145,18 +141,15 @@
 
 //! Namespace PS is the namespace used for classes, etc. created by the author (Paul Schellin)
 namespace PS {
-	//using namespace std;
 	using std::complex;
 	using std::size_t;
 	
 	using namespace boost::numeric::operators;
 	
 #ifdef WAVEFORM_USE_STD_SHARED_PTR
-	//typedef std::shared_ptr vanilla_shared_ptr;
 	using std::shared_ptr;
 	using std::make_shared;
 #elif defined(WAVEFORM_USE_BOOST_SHARED_PTR)
-	//typedef boost::shared_ptr vanilla_shared_ptr;
 	using boost::shared_ptr;
 	using boost::make_shared;
 #endif
@@ -174,218 +167,51 @@ namespace PS {
 	}
 	
 	
-	#ifdef WAVEFORM_USE_VALIDATING_SHARED_PTR
-	//!	validating_shared_ptr class
+	//!	FakeTransformClass: Defines the minimum interface for a transform class.
 	/*!
-	 *	This class wraps whatever shared_ptr class (either boost or std lib)
-	 *	was chosen, and hides the original operator*() and operator->()
-	 *	functions with operators which additionally validate the given domain.
+	 *	
 	 *
-	 *	The domain to validate is determined by a template specialization of
-	 *	MonitoringClass::Validate<>() which validates the time domain when T is
-	 *	DS_T and validates the freq domain when T is DS_C.
+	 *
+	 *
 	 */
-	template <typename T, typename MonitoringClass>
-	class validating_shared_ptr : public vanilla_shared_ptr<T> {
+	class FakeTransformClass {
 	public:
-		
-		MonitoringClass* monitor_;
-		
-		template <typename MonitoringClass>
-		validating_shared_ptr (T* p, MonitoringClass& monitor)
-			: vanilla_shared_ptr<T>(p)
-			, monitor_(&monitor)
-		{ }
-		
-		T&
-		operator*(void) const
+
+		template <typename Iterator1, typename Iterator2>
+		FakeTransformClass (const unsigned size, Iterator1 first1, Iterator2 first2)
 		{
-			monitor_->ValidatePrefix<T>();
-			return vanilla_shared_ptr<T>::operator*();
+
 		}
 		
-		T*
-		operator->(void) const
+		template <typename Iterator1, typename Iterator2>
+		FakeTransformClass (Iterator1 first1, Iterator1 last1, Iterator2 first2)
 		{
-			monitor_->ValidatePrefix<T>();
-			return vanilla_shared_ptr<T>::operator->();
+
 		}
-		
-	};
-	#endif
-	
-#ifdef WAVEFORM_USE_VALIDATING_WRAPPER
-	//!	ValidatingWrapper class
-	/*!
-	 *	! Disclaimer:
-	 *	!	These classes (ValidatingWrapper and Call_proxy) are not of my own
-	 *	!	design but rather are slight modifications of Bjarne Stroustrup's
-	 *	!	templated "Wrap" class, published in his paper "Wrapping C++ Member
-	 *	!	Function Calls" <http://www.stroustrup.com/wrapper.pdf>.
-	 *
-	 *	This class wraps an object class or a shared_ptr class (either boost or
-	 *	std lib), calling MonitoringClass::ValidatePrefix<T>() before returning
-	 *	the pointer. When the temporary returned Call_proxy object goes out of
-	 *	scope and is destroyed, the MonitoringClass::ValidateSuffix<T>()
-	 *	function is called.
-	 *
-	 *	The domain to validate is determined by a template specialization of
-	 *	MonitoringClass::ValidatePrefix<>() which validates the time domain when
-	 *	T is DS_T and validates the freq domain when T is DS_C. ValidateSuffix<>
-	 *	does the opposite.
-	 */
-	
-	template <typename T, typename MonitoringClass> class ValidatingWrapper;
-	
-	template <typename T, typename MonitoringClass>
-	class Call_proxy {
-		T* p_;
-		MonitoringClass* monitor_;
-		mutable bool own;
-		
-		Call_proxy(T* p, MonitoringClass& monitor)
-			: p_(p)
-			, monitor_(&monitor)
-		{ }								//	Restrict creation
-		
-		Call_proxy&
-		operator=(const Call_proxy&);	//	Prevent assignment
-	public:
-		template<typename U, typename M> friend class ValidatingWrapper;
-		
-		Call_proxy(const Call_proxy& a)
-			: p_(a.p_)
-			, monitor_(a.monitor_)
-			, own(true)
+
+		template <typename RandomAccessRange1, typename RandomAccessRange2>
+		FakeTransformClass (RandomAccessRange1& range1, RandomAccessRange2& range2)
 		{
-			a.own = false;
+
 		}
-		
-		~Call_proxy()
+
+		~FakeTransformClass (void)
 		{
-			if (own) monitor_->ValidateSuffix<T>();
+
 		}
-		
-		T*
-		operator->() const
+
+		void
+		exec_transform (void)
 		{
-			return p_;
+
 		}
-	}
-	
-	template <typename T, typename MonitoringClass>
-	class ValidatingWrapper {
-		T* p_;
-		MonitoringClass* monitor_;
-		
-		
-		
-	public:
-		
-		ValidatingWrapper (T* p, MonitoringClass& monitor)
-			: p_(p)
-			, monitor_(&monitor)
-		{ }
-		
-		Call_proxy<T, MonitoringClass>
-		operator*(void) const
+
+		void
+		exec_inverse_transform (void)
 		{
-			monitor_->ValidatePrefix<T>();
-			return p_;
-		}
-		
-		Call_proxy<T, MonitoringClass>
-		operator->(void) const
-		{
-			monitor_->ValidatePrefix<T>();
-			return p_;
+
 		}
 	};
-#endif
-	
-#ifdef WAVEFORM_USE_SHARED_PTR_WRAPPING
-	//!
-	/*!
-	 *	As great as this would be, it won't work the way it's written because
-	 *	the destructor/deleter function (i.e. the suffix function)
-	 *	must be an functor which is CopyConstructable, etc.
-	 *
-	 *	Also, it must accept the pointer as its argument, but it could just be
-	 *	ignored.
-	 *
-	 *	Better idea: in the ValidateSuffix function, accept p_ as a parameter,
-	 *	but recast it as a void pointer (because T can be multiple classes) and
-	 *	then compare p_ against both of the timeSeries_ and freqSpectrum_ raw
-	 *	pointers to see which domain it is, and run the suffix function
-	 *	appropriately.
-	 *	Or overload the ValidateSuffix() function, which also works. Either way,
-	 *	get rid of the template specialization.
-	 *
-	 *	Boost's shared_ptr constructor documentation states that the deleter
-	 *	object, d (of CopyConstructible type D) must have a non-throwing copy
-	 *	constructor as well as destructor, and that d(p_) "must be well-formed,
-	 *	must not invoke undefined bahavior, and must not throw exceptions."
-	 *
-	 *	If this shared_ptr constructor throws an exception (probably bad_alloc),
-	 *	then d(p_) is called (interesting: "Notes: When the time comes to delete
-	 *	the object pointed to by p, the stored copy of d is invoked with the
-	 *	stored copy of p as an argument." ... because they are copies, that may
-	 *	require some more thought to ensure everything is done correctly.
-	 *
-	 *	Boost::mem_fn is an adapter which allows member functions to be treated
-	 *	as function objects accepting the same arguments as the member function 
-	 *	but with an extra argument prepended to the argument list, representing
-	 *	the object instance.
-	 *
-	 *	It might be fine to only have a prefix function (forgoing the suffix)
-	 *	since const-ness doesn't prevent elements of the wrapped container class
-	 *	from being modified. Calling a validating prefix function which also
-	 *	sets the validDomain_ to the requested one should be sufficient, though
-	 *	depending on how a user implements a Waveform object into their code
-	 *	severe albiet unnecessary performance penalties may occur, particularly
-	 *	if accesses of one domain are interwoven with mutations of the other
-	 *	domain. An example of where this may be most annoying is with access to
-	 *	members of the template parameter container class for which a forwarding
-	 *	interface doesn't exist for stl-compatability reasons (e.g. the
-	 *	member "DiracComb" of DiscreteSamples, which can't have an interface in
-	 *	Waveform otherwise stl-compatability would be lost). A possible case
-	 *	might look like:
-	 *
-	 *		DiscreteSamples<...> noiseSpectrum (dataFromFileFactory<...>("data.csv"));
-	 *		Waveform<...> myWfm(noiseSpectrum);
-	 *		
-	 *		for (unsigned idx_time = 0; idx_time < myWfm.size(); ++idx_time) {
-	 *			
-	 *		}
-	 *
-	 *	Event when an accessed value is left unmodified, compilers most likely
-	 *	will be unable to optimize the access through invariant expression
-	 *	elimination because the access itself treats both accesses and mutations
-	 *	as though the object were mutated.
-	 *	 
-	 */
-	template<typename T, typename MonitoringClass>
-	class wrapped_shared_ptr {
-		T* p_;
-		MonitoringClass* monitor_;
-		
-	public:
-		
-		explicit wrapped_shared_ptr(T* p, MonitoringClass& monitor)
-			: p_(p)
-			, monitor_(&monitor)
-		{ }
-		
-		shared_ptr<T>
-		operator->() const
-		{
-			monitor_->ValidatePrefix<T>();
-			//return shared_ptr<T>(p_, monitor_->ValidateSuffix<T>());
-			return shared_ptr<T>(p_, boost::mem_fn(&MonitoringClass::ValidateSuffix));
-		}
-	}
-	
-#endif
 	
 	
 	
@@ -404,33 +230,11 @@ namespace PS {
 	 *	After a transform is completed, both domains will be valid until one is
 	 *	modified.
 	 */
-	
-	typedef double					DefaultRealT;
-	typedef complex<DefaultRealT>	DefaultComplexT;
-	
-	typedef typename FftwDft1d<>::allocator<DefaultRealT>		DefaultRealTAlloc;
-	typedef typename FftwDft1d<>::allocator<DefaultComplexT>	DefaultComplexTAlloc;
-
-
-	#ifdef WAVEFORM_WRAP_DISCRETESERIES_ALLIGNED_ALLOC
-	typedef DiscreteSeries	< DefaultRealT
-							, DefaultRealT
-							, DefaultRealTAlloc
-							, DefaultRealTAlloc
-							> DiscreteSeriesDefaultRealT;
-
-	typedef DiscreteSeries	< DefaultRealT
-							, DefaultComplexT
-							, DefaultRealTAlloc
-							, DefaultComplexTAlloc
-							> DiscreteSeriesDefaultComplexT;
-
-
-	template< typename TimeContainer = DiscreteSeriesDefaultRealT, typename FreqContainer = DiscreteSeriesDefaultComplexT>
-	#else
-	template< typename TimeContainer, typename FreqContainer>
-	#endif
-	class Waveform : boost::arithmetic1< Waveform<TimeContainer,FreqContainer> > {
+	template< /*template<typename...> class*/ typename TimeContainer
+			, /*template<typename...> class*/ typename FreqContainer = TimeContainer
+			, typename TransformT = FakeTransformClass
+			>
+	class Waveform : boost::arithmetic1< Waveform<TimeContainer,FreqContainer,TransformT> > {
 		
 	public:
 
@@ -456,7 +260,7 @@ namespace PS {
 		
 		
 		
-		typedef FftwDft1d<TimeT> FftType;
+		typedef FftwDft1d<TimeT> TransformT;
 		
 	private:
 		enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};
@@ -466,17 +270,17 @@ namespace PS {
 		shared_ptr<TimeContainer>	timeSeries_;
 		shared_ptr<FreqContainer>	freqSpectrum_;
 		
-		shared_ptr<FftType>			fourier_;
+		shared_ptr<TransformT>			transform_;
 		
 		
 	
 		
 		 
 		//	Default constructor
-		// Because this initializes Waveform::fourier_, which cannot be modified
+		// Because this initializes Waveform::transform_, which cannot be modified
 		//	post-initialization as currently written, it might make sense to
 		//	have the default constructor be private, and simply not used.
-		// Alternately, fourier_ could be made into a shared_ptr so it is able
+		// Alternately, transform_ could be made into a shared_ptr so it is able
 		//	to be deleted/reset and re-new'd (or made via factory make_shared())
 		//	more safely. That would make Waveform Assignable with much less
 		// manual dynamic memory handling.
@@ -485,8 +289,8 @@ namespace PS {
 			: validDomain_(EitherDomain)
 			, timeSeries_(make_shared<TimeContainer>())				// default initialize
 			, freqSpectrum_(make_shared<FreqContainer>())			// default initialize
-			, fourier_()
-			//, fourier_(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin())
+			, transform_()
+			//, transform_(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin())
 		{ }
 		
 		
@@ -496,7 +300,7 @@ namespace PS {
 			: validDomain_(EitherDomain)
 			, timeSeries_(make_shared<TimeContainer>(count))						// range-based initialization
 			, freqSpectrum_(make_shared<FreqContainer>(timeSeries_->size()/2 + 1))	// range-based initialization
-			, fourier_(make_shared<FftType>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
+			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		
 		// Copy constructor
@@ -504,7 +308,7 @@ namespace PS {
 			: validDomain_(toCopy.validDomain_)
 			, timeSeries_(make_shared<TimeContainer>(toCopy.timeSeries_))
 			, freqSpectrum_(make_shared<FreqContainer>(toCopy.freqSpectrum_))
-			, fourier_(make_shared<FftType>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
+			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		
 		// Time domain copy constructor
@@ -512,7 +316,7 @@ namespace PS {
 			: validDomain_(TimeDomain)
 			, timeSeries_(make_shared<TimeContainer>(toCopy))							// copy
 			, freqSpectrum_(make_shared<FreqContainer>(timeSeries_->size()/2 + 1))		// range-based initialization
-			, fourier_(make_shared<FftType>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
+			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		
 		// Frequency domain copy constructor
@@ -520,7 +324,7 @@ namespace PS {
 			: validDomain_(FreqDomain)
 			, timeSeries_(make_shared<TimeContainer>((toCopy.size()-1)*2))			// range-based initialization
 			, freqSpectrum_(make_shared<FreqContainer>(toCopy))						// copy
-			, fourier_(make_shared<FftType>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
+			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		 
 		 
@@ -677,16 +481,16 @@ namespace PS {
 				
 			}
 			else if (toValidate == TimeDomain) {
-				if (validDomain_ == FreqDomain) { fourier_->ExecuteIDFT(); }
+				if (validDomain_ == FreqDomain) { transform_->exec_inverse_transform(); }
 			}
 			else if (toValidate == FreqDomain) {
-				if (validDomain_ == TimeDomain) { fourier_->ExecuteDTFT(); }
+				if (validDomain_ == TimeDomain) { transform_->exec_transform(); }
 			}
 			else if (toValidate == EitherDomain) {
 				if (validDomain_ == TimeDomain) {
-					fourier_->ExecuteDTFT();
+					transform_->exec_transform();
 				} else if (validDomain_ == FreqDomain) {
-					fourier_->ExecuteIDFT();
+					transform_->exec_transform();
 				}
 			}
 			
@@ -748,10 +552,10 @@ namespace PS {
 				freqSpectrum_.reset(make_shared<FreqContainer>(*rhs.freqSpectrum_));
 				
 				
-				//fourier_.reset(make_shared<FftType>(timeSeries_->size()
+				//transform_.reset(make_shared<TransformT>(timeSeries_->size()
 				//									, timeSeries_->begin()
 				//									, freqSpectrum_->begin()));
-				fourier_.reset(make_shared<FftType>(timeSeries_->size()
+				transform_.reset(make_shared<TransformT>(timeSeries_->size()
 													, beginTime()
 													, beginFreq()));
 				
