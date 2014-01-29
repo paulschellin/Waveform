@@ -128,6 +128,7 @@
 #include <boost/mem_fn.hpp>			//	For wrapping/calling suffix functions
 #endif
 
+
 #include <boost/operators.hpp>
 
 
@@ -144,7 +145,7 @@ namespace PS {
 	using std::complex;
 	using std::size_t;
 	
-	using namespace boost::numeric::operators;
+	//using namespace ::boost::numeric::operators;
 	
 #ifdef WAVEFORM_USE_STD_SHARED_PTR
 	using std::shared_ptr;
@@ -260,7 +261,7 @@ namespace PS {
 		
 		
 		
-		typedef FftwDft1d<TimeT> TransformT;
+		//typedef FftwDft1d<TimeT> TransformT;
 		
 	private:
 		enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};

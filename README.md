@@ -11,9 +11,11 @@ Notes on installation:
 
 	
 The dependencies of the Waveform class are:
-	-	boost	(optional in some cases)
 
-	Otherwise, the Waveform class was designed to be a header-only library, so simply including Waveform.hpp and compiling as C++11 should be sufficient.
+	- boost	(optional in some cases)
+
+
+Otherwise, the Waveform class was designed to be a header-only library, so simply including Waveform.hpp and compiling as C++11 should be sufficient.
 
 Documentation for Waveform is of the form used by Doxygen (and incidentally some Java-style documentation standards), and there is a Doxyfile located in doc/. Running "doxygen doc/Doxyfile" will generate html documentation which is easily viewed by opening doc/html/index.html in a web browser.
 
