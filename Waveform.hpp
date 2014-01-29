@@ -145,7 +145,6 @@ namespace PS {
 	using std::complex;
 	using std::size_t;
 	
-	//using namespace ::boost::numeric::operators;
 	
 #ifdef WAVEFORM_USE_STD_SHARED_PTR
 	using std::shared_ptr;
@@ -156,6 +155,15 @@ namespace PS {
 #endif
 	
 	
+	//!	Operator+=: Performs element-wise sum over templated argument types.
+	/*!
+	 *	It's likely that this functionality is either defined elsewhere,
+	 *	or that this operator is going to mask the operator which should
+	 *	have been called for some types.
+	 *
+	 *	Consider removing.
+	 *
+	 */
 	template<typename Left, typename Right>
 	std::vector<Left>&
 	operator +=(std::vector<Left>& left, std::vector<Right> const& right)
@@ -170,43 +178,55 @@ namespace PS {
 	
 	//!	FakeTransformClass: Defines the minimum interface for a transform class.
 	/*!
-	 *	
+	 *	This class outlines the interface needed by some transform class.
 	 *
+	 *	Transforms could be (Fast) Fourier Transform, Laplace Transform, Wavelet
+	 *	Transform, Hilbert, etc.
 	 *
+	 *	This dummy class exists so that FFTW and other libraries aren't necessary
+	 *	to implement and test the Waveform class in the user's project.
 	 *
 	 */
 	class FakeTransformClass {
 	public:
 
+		//!	Size and Domain "begin()" constructor
 		template <typename Iterator1, typename Iterator2>
 		FakeTransformClass (const unsigned size, Iterator1 first1, Iterator2 first2)
 		{
 
 		}
-		
+	
+		//!	Iterator bounds constructor
 		template <typename Iterator1, typename Iterator2>
 		FakeTransformClass (Iterator1 first1, Iterator1 last1, Iterator2 first2)
 		{
 
 		}
 
+		//!	Boost::range constructor (Random Access Range)
 		template <typename RandomAccessRange1, typename RandomAccessRange2>
 		FakeTransformClass (RandomAccessRange1& range1, RandomAccessRange2& range2)
 		{
 
 		}
 
+		//!	Destructor
 		~FakeTransformClass (void)
 		{
 
 		}
 
+
+		//!	Execute the forward transform
 		void
 		exec_transform (void)
 		{
 
 		}
 
+
+		//!	Execute the inverse/reverse transform
 		void
 		exec_inverse_transform (void)
 		{
@@ -239,31 +259,44 @@ namespace PS {
 		
 	public:
 
+		//!	The type of the time domain
 		typedef typename TimeContainer::value_type	TimeT;
 		
+		//!	The type of the frequency domain
 		typedef typename FreqContainer::value_type	FreqT;
 		
+		//!	The "type" of the Waveform, inspired by std::map
 		typedef typename std::pair<TimeT,FreqT> value_type;
 		
+		//!	The allocator type of the time domain container
 		typedef typename TimeContainer::allocator_type TimeAllocT;
 		
+		//!	The allocator type of the frequency domain container
 		typedef typename FreqContainer::allocator_type	FreqAllocT;
 
-		//typedef typename FftwDft1d<>::allocator<TimeT>	TimeAllocT;
-		//typedef typename FftwDft1d<>::allocator<FreqT>	FreqAllocT;
-		
-		
+		//!	The iterator type of the time domain container
 		typedef typename TimeContainer::iterator	TimeIterator;
+		
+		//!	The iterator type of the frequency domain container
 		typedef typename FreqContainer::iterator	FreqIterator;
 		
+
+		//!	The const iterator type of the time domain container
 		typedef typename TimeContainer::const_iterator	TimeConstIterator;
+		
+		//!	The const iterator type of the frequency domain container
 		typedef typename FreqContainer::const_iterator	FreqConstIterator;
 		
 		
 		
-		//typedef FftwDft1d<TimeT> TransformT;
-		
 	private:
+
+		//!
+		/*!
+		 *
+		 *
+		 *
+		 */
 		enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};
 		
 		DomainSpecifier				validDomain_;
@@ -276,16 +309,17 @@ namespace PS {
 		
 	
 		
-		 
-		//	Default constructor
-		// Because this initializes Waveform::transform_, which cannot be modified
-		//	post-initialization as currently written, it might make sense to
-		//	have the default constructor be private, and simply not used.
-		// Alternately, transform_ could be made into a shared_ptr so it is able
-		//	to be deleted/reset and re-new'd (or made via factory make_shared())
-		//	more safely. That would make Waveform Assignable with much less
-		// manual dynamic memory handling.
-	private:
+	private: 
+		//!	Default constructor
+		/*! 
+		 *	Because this initializes Waveform::transform_, which cannot be modified
+		 *	post-initialization as currently written, it might make sense to
+		 *	have the default constructor be private, and simply not used.
+		 * Alternately, transform_ could be made into a shared_ptr so it is able
+		 *	to be deleted/reset and re-new'd (or made via factory make_shared())
+		 *	more safely. That would make Waveform Assignable with much less
+		 * manual dynamic memory handling.
+		 */
 		Waveform(void)
 			: validDomain_(EitherDomain)
 			, timeSeries_(make_shared<TimeContainer>())				// default initialize
@@ -296,7 +330,7 @@ namespace PS {
 		
 		
 	public:
-		// Range-based constructor
+		//! Fill constructor
 		Waveform(const size_t count)
 			: validDomain_(EitherDomain)
 			, timeSeries_(make_shared<TimeContainer>(count))						// range-based initialization
@@ -304,7 +338,7 @@ namespace PS {
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		
-		// Copy constructor
+		//! Copy constructor
 		explicit Waveform(const Waveform& toCopy)
 			: validDomain_(toCopy.validDomain_)
 			, timeSeries_(make_shared<TimeContainer>(toCopy.timeSeries_))
@@ -312,7 +346,7 @@ namespace PS {
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		
-		// Time domain copy constructor
+		//! Time domain copy constructor
 		explicit Waveform(const TimeContainer& toCopy)
 			: validDomain_(TimeDomain)
 			, timeSeries_(make_shared<TimeContainer>(toCopy))							// copy
@@ -320,7 +354,7 @@ namespace PS {
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		
-		// Frequency domain copy constructor
+		//! Frequency domain copy constructor
 		explicit Waveform(const FreqContainer& toCopy)
 			: validDomain_(FreqDomain)
 			, timeSeries_(make_shared<TimeContainer>((toCopy.size()-1)*2))			// range-based initialization
@@ -328,7 +362,8 @@ namespace PS {
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
 		 
-		 
+		
+		//!	Default destructor
 		~Waveform (void) {}
 		
 		//
@@ -337,15 +372,18 @@ namespace PS {
 		
 		
 		
+		//!	Returns the size of the time domain container
 		size_t
 		GetSize	(void) //const
 		{ return GetConstTimeSeries().size(); }
 		
+		//!	Returns the size of the time domain container
 		size_t
 		size (void) //const
 		{ return GetConstTimeSeries().size(); }
 		
-		//!
+
+		//!	Returns constant reference to the time domain container
 		/*!
 		 *	Pass "EitherDomain" because domain will not be modified.
 		 */
@@ -353,7 +391,8 @@ namespace PS {
 		GetConstTimeSeries (void)
 		{ ValidateDomain(EitherDomain); return *timeSeries_; }
 		
-		//!
+
+		//!	Returns constant reference to the frequency domain container
 		/*!
 		 *	Pass "EitherDomain" because domain will not be modified.
 		 */
@@ -361,10 +400,24 @@ namespace PS {
 		GetConstFreqSpectrum (void)
 		{ ValidateDomain(EitherDomain); return *freqSpectrum_; }
 		
+
+		//!	Returns mutable reference to the time domain container
+		/*!
+		 *	If the time domain is not valid, the inverse/reverse transform
+		 *	will automatically calculate the appropriate values behind the
+		 *	scenes, given the valid frequency domain; returns when complete.
+		 */
 		TimeContainer&
 		GetTimeSeries (void)
 		{ ValidateDomain(TimeDomain); return *timeSeries_; }
 		
+
+		//!	Returns mutable reference to the frequency domain container
+		/*!
+		 *	If the frequency domain is not valid, the forward transform
+		 *	will automatically calculate the appropriate values behind the
+		 *	scenes, given the valid time domain; returns when complete.
+		 */
 		FreqContainer&
 		GetFreqSpectrum (void)
 		{ ValidateDomain(FreqDomain); return *freqSpectrum_; }

@@ -7,6 +7,10 @@ Written by Paul Schellin at the Ohio State University, 2012 to 2013.
 
 The Waveform class provides a safe, intuitive interface to allow a signal (or trace, or waveform) to be described in either the time domain or in the frequency domain, and manipulated in either domain without explicitly needing to convert the datatype from one domain to another.
 
+
+Documentation/Reference available --  http://paulschellin.github.io/Waveform/
+
+
 Notes on installation:
 
 	
