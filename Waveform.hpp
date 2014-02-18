@@ -176,7 +176,7 @@ namespace PS {
 	}
 	
 	
-	//!	FakeTransformClass: Defines the minimum interface for a transform class.
+	//!	PlaceholderTransformClass: Defines the minimum interface for a transform class.
 	/*!
 	 *	This class outlines the interface needed by some transform class.
 	 *
@@ -187,32 +187,32 @@ namespace PS {
 	 *	to implement and test the Waveform class in the user's project.
 	 *
 	 */
-	class FakeTransformClass {
+	class PlaceholderTransformClass {
 	public:
 
 		//!	Size and Domain "begin()" constructor
 		template <typename Iterator1, typename Iterator2>
-		FakeTransformClass (const unsigned size, Iterator1 first1, Iterator2 first2)
+		PlaceholderTransformClass (const unsigned size, Iterator1 first1, Iterator2 first2)
 		{
 
 		}
 	
 		//!	Iterator bounds constructor
 		template <typename Iterator1, typename Iterator2>
-		FakeTransformClass (Iterator1 first1, Iterator1 last1, Iterator2 first2)
+		PlaceholderTransformClass (Iterator1 first1, Iterator1 last1, Iterator2 first2)
 		{
 
 		}
 
 		//!	Boost::range constructor (Random Access Range)
 		template <typename RandomAccessRange1, typename RandomAccessRange2>
-		FakeTransformClass (RandomAccessRange1& range1, RandomAccessRange2& range2)
+		PlaceholderTransformClass (RandomAccessRange1& range1, RandomAccessRange2& range2)
 		{
 
 		}
 
 		//!	Destructor
-		~FakeTransformClass (void)
+		~PlaceholderTransformClass (void)
 		{
 
 		}
@@ -253,7 +253,7 @@ namespace PS {
 	 */
 	template< /*template<typename...> class*/ typename TimeContainer
 			, /*template<typename...> class*/ typename FreqContainer = TimeContainer
-			, typename TransformT = FakeTransformClass
+			, typename TransformT = PlaceholderTransformClass
 			>
 	class Waveform : boost::arithmetic1< Waveform<TimeContainer,FreqContainer,TransformT> > {
 		
