@@ -1,9 +1,25 @@
-#ifndef FFTWTRANSFORMCLASS_HPP
-#define FFTWTRANSFORMCLASS_HPP 1
+#ifndef FFTWTRANSFORM_HPP
+#define FFTWTRANSFORM_HPP 1
+#pragma once
 
 #include <complex>
 #include <fftw3.h>
 #include <boost/range.hpp>
+
+
+#define FFTWTRANSFORM_USE_INIT 1
+
+/*
+ 	Note:
+
+	I may be moving this class and all of those like it to be namespaced
+	into PS::Waveform.
+
+	It makes sense to keep theses classes in the same namespace as Waveform,
+	similar to how boost treats extensions to serialize, accumulators, units,
+	etc.
+
+ */
 
 
 /*
@@ -25,6 +41,17 @@ class FftwTransform {
 	fftw_plan forwardPlan;
 	fftw_plan inversePlan;
 
+
+	/*
+		This init_ function is supposed to replace the lengthy initialization lists
+		in each constructor. Because the only two objects are fftw_plan objects,
+		there is absolutely no cost to move construction out of the initializer
+		lists.
+
+		The primary benefit is that it'll make it easier to maintain once additional
+		FFTW transforms are written, so less code duplication.
+
+	 */
 
 	template <typename Iterator1, typename Iterator2>
 	void
@@ -72,6 +99,7 @@ class FftwTransform {
 	//!	Iterator bounds constructor
 	template <typename Iterator1, typename Iterator2>
 	FftwTransform (Iterator1 first1, Iterator1 last1, Iterator2 first2)
+#ifdef FFTWTRANSFORM_USE_INIT
 		: forwardPlan( fftw_plan_dft_r2c_1d ( std::distance(first1, last1)
 											, &(*first1)
 											, reinterpret_cast<fftw_complex*>(&(*first2))
@@ -81,15 +109,18 @@ class FftwTransform {
 											, &(*first1)
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT) )
 
-	
+	{ }
+#else
 	{
-		//init_(first1, last1, first2);
+		init_(first1, last1, first2);
 	}
+#endif
 
 
 	//!	Boost::range constructor (Random Access Range)
 	template <typename RandomAccessRange1, typename RandomAccessRange2>
 	FftwTransform (RandomAccessRange1& range1, RandomAccessRange2& range2)
+#ifdef FFTWTRANSFORM_USE_INIT
 		: forwardPlan( fftw_plan_dft_r2c_1d ( boost::distance(range1)
 											, &(*boost::begin(range1))
 											, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
@@ -98,11 +129,12 @@ class FftwTransform {
 											, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
 											, &(*boost::begin(range1))
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT) )
-	
+	{ }
+#else
 	{
-		//init_(boost::begin(range1), boost::end(range1), boost::begin(range2));
+		init_(boost::begin(range1), boost::end(range1), boost::begin(range2));
 	}
-
+#endif
 
 
 	~FftwTransform (void)

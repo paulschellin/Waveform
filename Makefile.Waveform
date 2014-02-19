@@ -23,7 +23,7 @@ LIBS=-lgtest -lgtest_main -lpthread -lfftw3
 
 .PHONY: clean
 clean:
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) $(PROJECT)
 
 
 .PHONY: all
