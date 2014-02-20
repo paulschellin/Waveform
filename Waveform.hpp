@@ -96,8 +96,7 @@
 
 #ifndef WAVEFORM_HPP
 #define WAVEFORM_HPP 1
-
-#define WAVEFORM_USE_BOOST_SHARED_PTR 1
+#pragma once
 
 
 // Standard libraries
@@ -114,27 +113,10 @@
 #include <iomanip>
 #include <sstream>
 
-#ifdef WAVEFORM_USE_STD_SHARED_PTR
-#include <memory>
-#endif
-
 
 // Boost header files
-//#include <boost/accumulators/numeric/functional/vector.hpp>
-//	The above included file defines operators for std::vector<...>, including:
-//	lhs / rhs	for both scalar and vector rhs
-//	lhs * rhs	for both scalar and vector rhs
-//
-
-#ifdef WAVEFORM_USE_BOOST_SHARED_PTR
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/mem_fn.hpp>			//	For wrapping/calling suffix functions
-#endif
-
 
 #include <boost/operators.hpp>
-
 
 #include <boost/range.hpp>
 
@@ -150,37 +132,10 @@ namespace PS {
 	using std::size_t;
 	
 	
-#ifdef WAVEFORM_USE_STD_SHARED_PTR
-	using std::shared_ptr;
-	using std::make_shared;
-#elif defined(WAVEFORM_USE_BOOST_SHARED_PTR)
-	using boost::shared_ptr;
-	using boost::make_shared;
-#endif
-	
 	using boost::begin;
 	using boost::end;
 
 	
-	//!	Operator+=: Performs element-wise sum over templated argument types.
-	/*!
-	 *	It's likely that this functionality is either defined elsewhere,
-	 *	or that this operator is going to mask the operator which should
-	 *	have been called for some types.
-	 *
-	 *	Consider removing.
-	 *
-	 */
-	template<typename Left, typename Right>
-	std::vector<Left>&
-	operator +=(std::vector<Left>& left, std::vector<Right> const& right)
-	{
-		for(std::size_t i = 0, size = left.size(); i != size; ++i)
-		{
-			left[i] += right[i];
-		}
-		return left;
-	}
 	
 	
 	//!	PlaceholderTransformClass: Defines the minimum interface for a transform class.
@@ -315,14 +270,6 @@ namespace PS {
 
 		TransformT		transform_;
 
-		/*
-		shared_ptr<TimeContainer>	timeSeries_;
-		shared_ptr<FreqContainer>	freqSpectrum_;
-		
-		shared_ptr<TransformT>			transform_;
-		*/
-		
-	
 		
 	private: 
 		//!	Default constructor
@@ -337,23 +284,11 @@ namespace PS {
 		 */
 		Waveform(void)
 			: validDomain_(EitherDomain)
-			//, timeSeries_(make_shared<TimeContainer>())				// default initialize
-			//, freqSpectrum_(make_shared<FreqContainer>())			// default initialize
-			//, transform_()
-			//, transform_(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin())
 		{ }
 		
 		
 	public:
-		//! Fill constructor
-/*	Need to remove shared pointers
-		Waveform(const size_t count)
-			: validDomain_(EitherDomain)
-			, timeSeries_(make_shared<TimeContainer>(count))						// range-based initialization
-			, freqSpectrum_(make_shared<FreqContainer>(timeSeries_->size()/2 + 1))	// range-based initialization
-			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
-		{ }
-*/
+		
 		//! Fill constructor
 		Waveform(const size_t count)
 			: validDomain_(EitherDomain)
@@ -361,7 +296,6 @@ namespace PS {
 			, freqSpectrum_(count)
 			, transform_(timeSeries_, freqSpectrum_)
 		{ }
-
 
 
 		//! Copy constructor
@@ -372,12 +306,6 @@ namespace PS {
 			, transform_(timeSeries_, freqSpectrum_)
 		{ }
 		
-		/*
-			, timeSeries_(make_shared<TimeContainer>(toCopy.timeSeries_))
-			, freqSpectrum_(make_shared<FreqContainer>(toCopy.freqSpectrum_))
-			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
-		{ }
-		*/
 		
 		//! Time domain copy constructor
 		explicit Waveform(const TimeContainer& toCopy)
@@ -388,13 +316,6 @@ namespace PS {
 		{ }
 		
 		
-		/*
-			, timeSeries_(make_shared<TimeContainer>(toCopy))							// copy
-			, freqSpectrum_(make_shared<FreqContainer>(timeSeries_->size()/2 + 1))		// range-based initialization
-			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
-		{ }
-		*/
-		
 		//! Frequency domain copy constructor
 		explicit Waveform(const FreqContainer& toCopy)
 			: validDomain_(FreqDomain)
@@ -403,27 +324,17 @@ namespace PS {
 			, transform_(timeSeries_, freqSpectrum_)
 		{ }
 			
-		/*	
-			, timeSeries_(make_shared<TimeContainer>((toCopy.size()-1)*2))			// range-based initialization
-			, freqSpectrum_(make_shared<FreqContainer>(toCopy))						// copy
-			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
-		{ }
-		 */
 		
 		//!	Default destructor
 		~Waveform (void) {}
-		
-		//
-		// Accessor Function Declarations
-		//
-		
 		
 		
 		//!	Returns the size of the time domain container
 		size_t
 		GetSize	(void) //const
 		{ return GetConstTimeSeries().size(); }
-		
+	
+
 		//!	Returns the size of the time domain container
 		size_t
 		size (void) //const
@@ -444,7 +355,6 @@ namespace PS {
 		const TimeContainer&
 		GetConstTimeSeries (void)
 		{ ValidateDomain(EitherDomain); return timeSeries_; }
-		//{ ValidateDomain(EitherDomain); return *timeSeries_; }
 		
 
 		//!	Returns constant reference to the frequency domain container
@@ -460,7 +370,6 @@ namespace PS {
 		const FreqContainer&
 		GetConstFreqSpectrum (void)
 		{ ValidateDomain(EitherDomain); return freqSpectrum_; }
-		//{ ValidateDomain(EitherDomain); return *freqSpectrum_; }
 		
 
 		//!	Returns mutable reference to the time domain container
@@ -472,7 +381,6 @@ namespace PS {
 		TimeContainer&
 		GetTimeSeries (void)
 		{ ValidateDomain(TimeDomain); return timeSeries_; }
-		//{ ValidateDomain(TimeDomain); return *timeSeries_; }
 		
 
 		//!	Returns mutable reference to the frequency domain container
@@ -484,33 +392,30 @@ namespace PS {
 		FreqContainer&
 		GetFreqSpectrum (void)
 		{ ValidateDomain(FreqDomain); return freqSpectrum_; }
-		//{ ValidateDomain(FreqDomain); return *freqSpectrum_; }
 		
 		
 		//!	Returns read-only iterator to the first element in the time domain
 		TimeConstIterator
 		beginTime (void) const
 		{ return TimeConstIterator (boost::begin(timeSeries_)); }
-		//{ return TimeConstIterator (timeSeries_->begin()); }
-		
+	
+
 		//!	Returns read-only iterator to the first element in the freq domain
 		FreqConstIterator
 		beginFreq (void) const
 		{ return FreqConstIterator (boost::begin(freqSpectrum_)); }
-		//{ return FreqConstIterator (freqSpectrum_->begin()); }
-		
+	
+
 		//!	Returns read-only iterator to one past the last element
 		TimeConstIterator
 		endTime (void) const
 		{ return TimeConstIterator (boost::end(timeSeries_)); }
-		//{ return TimeConstIterator (timeSeries_->end()); }
-		
+	
+
 		//!	Returns read-only iterator to one past the last element
 		FreqConstIterator
 		endFreq (void) const
 		{ return FreqConstIterator (boost::end(freqSpectrum_)); }
-		//{ return FreqConstIterator (freqSpectrum_->end()); }
-		
 		
 		
 		//!	Returns read-only iterator to the first element in the time domain
@@ -519,36 +424,34 @@ namespace PS {
 		{
 			ValidateDomain(TimeDomain);
 			return TimeIterator (boost::begin(timeSeries_));
-			//return TimeIterator (timeSeries_->begin());
 		}
 		
+
 		//!	Returns read-only iterator to the first element in the freq domain
 		FreqIterator
 		beginFreq (void)
 		{
 			ValidateDomain(FreqDomain);
 			return FreqIterator (boost::begin(freqSpectrum_));
-			//return FreqIterator (freqSpectrum_->begin());
 		}
 		
+
 		//!	Returns read-only iterator to one past the last element
 		TimeIterator
 		endTime (void)
 		{
 			ValidateDomain(TimeDomain);
 			return TimeIterator (boost::end(timeSeries_));
-			//return TimeIterator (timeSeries_->end());
 		}
 		
+
 		//!	Returns read-only iterator to one past the last element
 		FreqIterator
 		endFreq (void)
 		{
 			ValidateDomain(FreqDomain);
 			return FreqIterator (boost::end(freqSpectrum_));
-			//return FreqIterator (freqSpectrum_->end());
 		}
-		
 		
 		
 		//!	Returns read-only iterator to the first element in the time domain
@@ -560,14 +463,6 @@ namespace PS {
 		#else
 			return TimeConstIterator (timeSeries_.cbegin());
 		#endif
-
-		/*
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return TimeConstIterator (timeSeries_->begin());
-		#else
-			return TimeConstIterator (timeSeries_->cbegin());
-		#endif
-		*/
 		}
 		
 		//!	Returns read-only iterator to the first element in the freq domain
@@ -579,17 +474,8 @@ namespace PS {
 		#else
 			return FreqConstIterator (freqSpectrum_.cbegin());
 		#endif
-
-
-/*
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return FreqConstIterator (freqSpectrum_->begin());
-		#else
-			return FreqConstIterator (freqSpectrum_->cbegin());
-		#endif
-*/
-
 		}
+
 
 		//!	Returns read-only iterator to one past the last element
 		TimeConstIterator
@@ -600,16 +486,8 @@ namespace PS {
 		#else
 			return TimeConstIterator (timeSeries_.cend());
 		#endif
-
-/*
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return TimeConstIterator (timeSeries_->end());
-		#else
-			return TimeConstIterator (timeSeries_->cend());
-		#endif
-*/
-
 		}
+
 
 		//!	Returns read-only iterator to one past the last element
 		FreqConstIterator
@@ -620,17 +498,9 @@ namespace PS {
 		#else
 			return FreqConstIterator (freqSpectrum_.cend());
 		#endif
-
-
-		/*
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return FreqConstIterator (freqSpectrum_->end());
-		#else
-			return FreqConstIterator (freqSpectrum_->cend());
-		#endif
-		*/
 		}
 		
+
 		//______________________________________________________________________
 		//!	Validate and ensure that the specified domain is up-to-date
 		/*!
@@ -644,67 +514,21 @@ namespace PS {
 			}
 			else if (toValidate == TimeDomain) {
 				if (validDomain_ == FreqDomain) { transform_.exec_inverse_transform(); }
-				//if (validDomain_ == FreqDomain) { transform_->exec_inverse_transform(); }
 			}
 			else if (toValidate == FreqDomain) {
 				if (validDomain_ == TimeDomain) { transform_.exec_transform(); }
-				//if (validDomain_ == TimeDomain) { transform_->exec_transform(); }
 			}
 			else if (toValidate == EitherDomain) {
 				if (validDomain_ == TimeDomain) {
 					transform_.exec_transform();
-					//transform_->exec_transform();
 				} else if (validDomain_ == FreqDomain) {
 					transform_.exec_inverse_transform();
-					//transform_->exec_transform();
 				}
 			}
 			
 			validDomain_ = toValidate;
 			return 0;
 		}
-		
-		/*
-		template <typename WhichDomain>
-		void ValidatePrefix (void)
-		{ }
-		
-		template <>
-		void ValidatePrefix<DS_T> (void)
-		{ ValidateDomain(TimeDomain); }
-		
-		template <>
-		void ValidatePrefix<DS_C> (void)
-		{ ValidateDomain(FreqDomain); }
-		*/
-		/*
-		void
-		ValidateSuffix ()
-		{
-			
-		}
-		 */
-		
-		/*
-		template <typename WhichDomain>
-		int ValidateSuffix<WhichDomain> (void)
-		{ return 0; }
-		
-		template <>
-		int ValidateSuffix<DS_T> (void)
-		{
-			ValidateDomain(FreqDomain);
-			return 0;
-		}
-		
-		template <>
-		int ValidateSuffix<DS_C> (void)
-		{
-			ValidateDomain(TimeDomain);
-			return 0;
-		}
-		 */
-		
 		
 
 
@@ -745,6 +569,7 @@ namespace PS {
 			swap(first.transform_, second.transform_);
 		}
 
+
 		//! Copy-assignment operator
 		/*!
 		 *	We need to make sure that copy assignment is without
@@ -774,7 +599,6 @@ namespace PS {
 		}
 
 
-
 		//!	Move constructor (C++11)
 		/*!
 		 *	When rhs is just an rvalue, C++11 can make use of move semantics,
@@ -791,31 +615,6 @@ namespace PS {
 			swap(*this, rhs);
 		}
 
-		//______________________________________________________________________
-		//!	Copy-assignment operator
-		/*
-		Waveform&
-		operator= (const Waveform& rhs)
-		{
-			if (&rhs != this) {				
-				rhs.ValidateDomain(EitherDomain);
-				
-				timeSeries_.reset(make_shared<TimeContainer>(*rhs.timeSeries_));
-				freqSpectrum_.reset(make_shared<FreqContainer>(*rhs.freqSpectrum_));
-				
-				
-				//transform_.reset(make_shared<TransformT>(timeSeries_->size()
-				//									, timeSeries_->begin()
-				//									, freqSpectrum_->begin()));
-				transform_.reset(make_shared<TransformT>(timeSeries_->size()
-													, beginTime()
-													, beginFreq()));
-				
-				validDomain_ = EitherDomain;
-			}
-			return *this;
-		}
-		*/
 		
 		//
 		//	Compound Assignment Functions
@@ -853,6 +652,7 @@ namespace PS {
 		//	in the namespace boost::numeric::operators.
 		////////////////////////////////////////////////////////////////////////
 		
+
 		//______________________________________________________________________
 		//!	Add another Waveform
 		/*!
@@ -866,6 +666,7 @@ namespace PS {
 			return *this;
 		}
 		
+
 		//______________________________________________________________________
 		//!	Subtract another Waveform
 		/*!
@@ -879,6 +680,7 @@ namespace PS {
 			return *this;
 		}
 		
+
 		//______________________________________________________________________
 		//!	Multiply by another Waveform
 		/*!
@@ -893,6 +695,7 @@ namespace PS {
 			return *this;
 		}
 		
+
 		//______________________________________________________________________
 		//!	Divide by another Waveform
 		/*!
@@ -905,7 +708,6 @@ namespace PS {
 			this->GetFreqSpectrum() /= rhs.GetFreqSpectrum();
 			return *this;
 		}
-		
 		
 	};
 	

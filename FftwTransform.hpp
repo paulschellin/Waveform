@@ -7,7 +7,7 @@
 #include <boost/range.hpp>
 
 
-#define NORMALIZE_INVERSE 1
+//#define NORMALIZE_INVERSE 1
 
 #define FFTWTRANSFORM_USE_INIT 1
 
@@ -45,6 +45,8 @@ class FftwTransform {
 
 	#ifdef NORMALIZE_INVERSE
 	
+	double*	first_;
+	double*	last_;
 
 	#endif
 
@@ -73,7 +75,11 @@ class FftwTransform {
 											, reinterpret_cast<fftw_complex*>(&(*first2))
 											, &(*first1)
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
-
+		#ifdef NORMALIZE_INVERSE
+		first_ = first1;
+		last_ = last1;
+		#endif
+		
 	}
 
 
@@ -162,8 +168,8 @@ class FftwTransform {
 		fftw_execute(inversePlan);
 
 		#ifdef NORMALIZE_INVERSE
-		
-	
+		unsigned length_ (unsigned(last_) - unsigned(first_) + 1);
+		std::for_each(first_, last_, [](double& x) {x /= length_;});
 		#endif
 	
 	}
