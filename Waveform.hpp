@@ -88,6 +88,10 @@
  		types or if nesting (i.e. template < template <typename...> class ContainerT, ...).
 		It maybe be wise to use static asserts as well.
 
+ [ ] Determine whether it is better to have so many iterator accessors brought to the surface
+ 		of the Waveform interface or if they should be left to the contained container
+		classes.
+
  */
 
 #ifndef WAVEFORM_HPP
@@ -154,6 +158,9 @@ namespace PS {
 	using boost::make_shared;
 #endif
 	
+	using boost::begin;
+	using boost::end;
+
 	
 	//!	Operator+=: Performs element-wise sum over templated argument types.
 	/*!
@@ -191,11 +198,13 @@ namespace PS {
 	public:
 
 		//!	Size and Domain "begin()" constructor
+		/*	Deprecated due to lack of cohesion with STL idioms
 		template <typename Iterator1, typename Iterator2>
 		PlaceholderTransformClass (const unsigned size, Iterator1 first1, Iterator2 first2)
 		{
 
 		}
+		*/
 	
 		//!	Iterator bounds constructor
 		template <typename Iterator1, typename Iterator2>
@@ -301,11 +310,17 @@ namespace PS {
 		
 		DomainSpecifier				validDomain_;
 
+		TimeContainer	timeSeries_;
+		FreqContainer	freqSpectrum_;
+
+		TransformT		transform_;
+
+		/*
 		shared_ptr<TimeContainer>	timeSeries_;
 		shared_ptr<FreqContainer>	freqSpectrum_;
 		
 		shared_ptr<TransformT>			transform_;
-		
+		*/
 		
 	
 		
@@ -322,46 +337,78 @@ namespace PS {
 		 */
 		Waveform(void)
 			: validDomain_(EitherDomain)
-			, timeSeries_(make_shared<TimeContainer>())				// default initialize
-			, freqSpectrum_(make_shared<FreqContainer>())			// default initialize
-			, transform_()
+			//, timeSeries_(make_shared<TimeContainer>())				// default initialize
+			//, freqSpectrum_(make_shared<FreqContainer>())			// default initialize
+			//, transform_()
 			//, transform_(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin())
 		{ }
 		
 		
 	public:
 		//! Fill constructor
+/*	Need to remove shared pointers
 		Waveform(const size_t count)
 			: validDomain_(EitherDomain)
 			, timeSeries_(make_shared<TimeContainer>(count))						// range-based initialization
 			, freqSpectrum_(make_shared<FreqContainer>(timeSeries_->size()/2 + 1))	// range-based initialization
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
-		
+*/
+		//! Fill constructor
+		Waveform(const size_t count)
+			: validDomain_(EitherDomain)
+			, timeSeries_(count)
+			, freqSpectrum_(count)
+			, transform_(timeSeries_, freqSpectrum_)
+		{ }
+
+
+
 		//! Copy constructor
 		explicit Waveform(const Waveform& toCopy)
 			: validDomain_(toCopy.validDomain_)
+			, timeSeries_(toCopy.timeSeries_)
+			, freqSpectrum_(toCopy.freqSpectrum_)
+			, transform_(timeSeries_, freqSpectrum_)
+		{ }
+		
+		/*
 			, timeSeries_(make_shared<TimeContainer>(toCopy.timeSeries_))
 			, freqSpectrum_(make_shared<FreqContainer>(toCopy.freqSpectrum_))
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
+		*/
 		
 		//! Time domain copy constructor
 		explicit Waveform(const TimeContainer& toCopy)
 			: validDomain_(TimeDomain)
+			, timeSeries_(toCopy)
+			, freqSpectrum_(timeSeries_.size()/2 + 1)	// This might turn out to be wrong for non-even lengths, right?
+			, transform_(timeSeries_, freqSpectrum_)
+		{ }
+		
+		
+		/*
 			, timeSeries_(make_shared<TimeContainer>(toCopy))							// copy
 			, freqSpectrum_(make_shared<FreqContainer>(timeSeries_->size()/2 + 1))		// range-based initialization
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
+		*/
 		
 		//! Frequency domain copy constructor
 		explicit Waveform(const FreqContainer& toCopy)
 			: validDomain_(FreqDomain)
+			, timeSeries_((toCopy.size() - 1) * 2)
+			, freqSpectrum_(toCopy)
+			, transform_(timeSeries_, freqSpectrum_)
+		{ }
+			
+		/*	
 			, timeSeries_(make_shared<TimeContainer>((toCopy.size()-1)*2))			// range-based initialization
 			, freqSpectrum_(make_shared<FreqContainer>(toCopy))						// copy
 			, transform_(make_shared<TransformT>(timeSeries_->size(), timeSeries_->begin(), freqSpectrum_->begin()))
 		{ }
-		 
+		 */
 		
 		//!	Default destructor
 		~Waveform (void) {}
@@ -386,19 +433,34 @@ namespace PS {
 		//!	Returns constant reference to the time domain container
 		/*!
 		 *	Pass "EitherDomain" because domain will not be modified.
+		 *
+		 *	Unfortunately the const keyword cannot be used here,
+		 *	because ValidateDomain(...) could modify the class.
+		 *	
+		 *	If enough thought went into it, there could be a way
+		 *	to separate these cases and use overloading between the
+		 *	non-const and const member methods.
 		 */
 		const TimeContainer&
 		GetConstTimeSeries (void)
-		{ ValidateDomain(EitherDomain); return *timeSeries_; }
+		{ ValidateDomain(EitherDomain); return timeSeries_; }
+		//{ ValidateDomain(EitherDomain); return *timeSeries_; }
 		
 
 		//!	Returns constant reference to the frequency domain container
 		/*!
 		 *	Pass "EitherDomain" because domain will not be modified.
+		 *	Unfortunately the const keyword cannot be used here,
+		 *	because ValidateDomain(...) could modify the class.
+		 *	
+		 *	If enough thought went into it, there could be a way
+		 *	to separate these cases and use overloading between the
+		 *	non-const and const member methods.
 		 */
 		const FreqContainer&
 		GetConstFreqSpectrum (void)
-		{ ValidateDomain(EitherDomain); return *freqSpectrum_; }
+		{ ValidateDomain(EitherDomain); return freqSpectrum_; }
+		//{ ValidateDomain(EitherDomain); return *freqSpectrum_; }
 		
 
 		//!	Returns mutable reference to the time domain container
@@ -409,7 +471,8 @@ namespace PS {
 		 */
 		TimeContainer&
 		GetTimeSeries (void)
-		{ ValidateDomain(TimeDomain); return *timeSeries_; }
+		{ ValidateDomain(TimeDomain); return timeSeries_; }
+		//{ ValidateDomain(TimeDomain); return *timeSeries_; }
 		
 
 		//!	Returns mutable reference to the frequency domain container
@@ -420,28 +483,33 @@ namespace PS {
 		 */
 		FreqContainer&
 		GetFreqSpectrum (void)
-		{ ValidateDomain(FreqDomain); return *freqSpectrum_; }
+		{ ValidateDomain(FreqDomain); return freqSpectrum_; }
+		//{ ValidateDomain(FreqDomain); return *freqSpectrum_; }
 		
 		
 		//!	Returns read-only iterator to the first element in the time domain
 		TimeConstIterator
 		beginTime (void) const
-		{ return TimeConstIterator (timeSeries_->begin()); }
+		{ return TimeConstIterator (boost::begin(timeSeries_)); }
+		//{ return TimeConstIterator (timeSeries_->begin()); }
 		
 		//!	Returns read-only iterator to the first element in the freq domain
 		FreqConstIterator
 		beginFreq (void) const
-		{ return FreqConstIterator (freqSpectrum_->begin()); }
+		{ return FreqConstIterator (boost::begin(freqSpectrum_)); }
+		//{ return FreqConstIterator (freqSpectrum_->begin()); }
 		
 		//!	Returns read-only iterator to one past the last element
 		TimeConstIterator
 		endTime (void) const
-		{ return TimeConstIterator (timeSeries_->end()); }
+		{ return TimeConstIterator (boost::end(timeSeries_)); }
+		//{ return TimeConstIterator (timeSeries_->end()); }
 		
 		//!	Returns read-only iterator to one past the last element
 		FreqConstIterator
 		endFreq (void) const
-		{ return FreqConstIterator (freqSpectrum_->end()); }
+		{ return FreqConstIterator (boost::end(freqSpectrum_)); }
+		//{ return FreqConstIterator (freqSpectrum_->end()); }
 		
 		
 		
@@ -450,7 +518,8 @@ namespace PS {
 		beginTime (void)
 		{
 			ValidateDomain(TimeDomain);
-			return TimeIterator (timeSeries_->begin());
+			return TimeIterator (boost::begin(timeSeries_));
+			//return TimeIterator (timeSeries_->begin());
 		}
 		
 		//!	Returns read-only iterator to the first element in the freq domain
@@ -458,7 +527,8 @@ namespace PS {
 		beginFreq (void)
 		{
 			ValidateDomain(FreqDomain);
-			return FreqIterator (freqSpectrum_->begin());
+			return FreqIterator (boost::begin(freqSpectrum_));
+			//return FreqIterator (freqSpectrum_->begin());
 		}
 		
 		//!	Returns read-only iterator to one past the last element
@@ -466,7 +536,8 @@ namespace PS {
 		endTime (void)
 		{
 			ValidateDomain(TimeDomain);
-			return TimeIterator (timeSeries_->end());
+			return TimeIterator (boost::end(timeSeries_));
+			//return TimeIterator (timeSeries_->end());
 		}
 		
 		//!	Returns read-only iterator to one past the last element
@@ -474,7 +545,8 @@ namespace PS {
 		endFreq (void)
 		{
 			ValidateDomain(FreqDomain);
-			return FreqIterator (freqSpectrum_->end());
+			return FreqIterator (boost::end(freqSpectrum_));
+			//return FreqIterator (freqSpectrum_->end());
 		}
 		
 		
@@ -484,10 +556,18 @@ namespace PS {
 		cbeginTime (void) const
 		{
 		#ifndef WAVEFORM_USE_CBEGIN_CEND
+			return TimeConstIterator (boost::begin(timeSeries_));
+		#else
+			return TimeConstIterator (timeSeries_.cbegin());
+		#endif
+
+		/*
+		#ifndef WAVEFORM_USE_CBEGIN_CEND
 			return TimeConstIterator (timeSeries_->begin());
 		#else
 			return TimeConstIterator (timeSeries_->cbegin());
 		#endif
+		*/
 		}
 		
 		//!	Returns read-only iterator to the first element in the freq domain
@@ -495,32 +575,60 @@ namespace PS {
 		cbeginFreq (void) const
 		{
 		#ifndef WAVEFORM_USE_CBEGIN_CEND
+			return FreqConstIterator (begin(freqSpectrum_));
+		#else
+			return FreqConstIterator (freqSpectrum_.cbegin());
+		#endif
+
+
+/*
+		#ifndef WAVEFORM_USE_CBEGIN_CEND
 			return FreqConstIterator (freqSpectrum_->begin());
 		#else
 			return FreqConstIterator (freqSpectrum_->cbegin());
 		#endif
+*/
+
 		}
-		
+
 		//!	Returns read-only iterator to one past the last element
 		TimeConstIterator
 		cendTime (void) const
 		{
 		#ifndef WAVEFORM_USE_CBEGIN_CEND
+			return TimeConstIterator (end(timeSeries_));
+		#else
+			return TimeConstIterator (timeSeries_.cend());
+		#endif
+
+/*
+		#ifndef WAVEFORM_USE_CBEGIN_CEND
 			return TimeConstIterator (timeSeries_->end());
 		#else
 			return TimeConstIterator (timeSeries_->cend());
 		#endif
+*/
+
 		}
-		
+
 		//!	Returns read-only iterator to one past the last element
 		FreqConstIterator
 		cendFreq (void) const
 		{
 		#ifndef WAVEFORM_USE_CBEGIN_CEND
+			return FreqConstIterator (end(freqSpectrum_));
+		#else
+			return FreqConstIterator (freqSpectrum_.cend());
+		#endif
+
+
+		/*
+		#ifndef WAVEFORM_USE_CBEGIN_CEND
 			return FreqConstIterator (freqSpectrum_->end());
 		#else
 			return FreqConstIterator (freqSpectrum_->cend());
 		#endif
+		*/
 		}
 		
 		//______________________________________________________________________
@@ -535,16 +643,20 @@ namespace PS {
 				
 			}
 			else if (toValidate == TimeDomain) {
-				if (validDomain_ == FreqDomain) { transform_->exec_inverse_transform(); }
+				if (validDomain_ == FreqDomain) { transform_.exec_inverse_transform(); }
+				//if (validDomain_ == FreqDomain) { transform_->exec_inverse_transform(); }
 			}
 			else if (toValidate == FreqDomain) {
-				if (validDomain_ == TimeDomain) { transform_->exec_transform(); }
+				if (validDomain_ == TimeDomain) { transform_.exec_transform(); }
+				//if (validDomain_ == TimeDomain) { transform_->exec_transform(); }
 			}
 			else if (toValidate == EitherDomain) {
 				if (validDomain_ == TimeDomain) {
-					transform_->exec_transform();
+					transform_.exec_transform();
+					//transform_->exec_transform();
 				} else if (validDomain_ == FreqDomain) {
-					transform_->exec_transform();
+					transform_.exec_inverse_transform();
+					//transform_->exec_transform();
 				}
 			}
 			
@@ -594,8 +706,94 @@ namespace PS {
 		 */
 		
 		
+
+
+		//!	Swaps two values without throwing
+		/*!
+		 *	Because timeSeries_ and freqSpectrum_ are large
+		 *	container objects, there's a good chance that
+		 *	an overloaded swap function was written for them.
+		 *
+		 *	In the event that swap was not specialized for
+		 *	one of the member object types, we bring 
+		 *	std::swap into the scope so that way all swap
+		 *	functions may be found using unqualified lookup.
+		 *
+		 *	This is necessary for the overloads to work.
+		 *	The concept is coined "Argument-Dependant Lookup",
+		 *	or ADL.
+		 *
+		 *	None of the swaps should throw, but the order in
+		 *	which the member objects are swapped could still
+		 *	matter.
+		 *
+		 *	It's also possible that the transform_ object
+		 *	doesn't need to have any state of its own and
+		 *	only wrap functions, but I'm not sure if there
+		 *	is an easy way to attempt that.
+		 */
+		friend void	swap(Waveform& first, Waveform& second)
+		{
+			using std::swap;
+
+			swap(first.validDomain_, second.validDomain_);
+
+			swap(first.timeSeries_, second.timeSeries_);
+
+			swap(first.freqSpectrum_, second.freqSpectrum_);
+
+			swap(first.transform_, second.transform_);
+		}
+
+		//! Copy-assignment operator
+		/*!
+		 *	We need to make sure that copy assignment is without
+		 *	errors, and we can do that using the copy-and-swap idiom.
+		 *
+		 *	The values of the lhs and rhs are swapped, not even
+		 *	requiring a check for self-assignment.
+		 *
+		 *	Because the operator accepts rhs by value (and mutable),
+		 *	once inside the function rhs is an rvalue, which means
+		 *	that after the two are swapped, the swapped-away object
+		 *	is a temporary rvalue at the end of the scope, destroyed
+		 *	just as the previous value of rhs is returned as "*this",
+		 *	so there is no opportunity for something to throw after
+		 *	the old value was destroyed.
+		 *
+		 *	No need to worry about explicit calls to delete/ delete [],
+		 *	and the compiler can basically optimize away the entire
+		 *	transaction using Return Value Optimization (RVO)
+		 */
+		Waveform&
+		operator= (Waveform rhs)
+		{
+			swap(*this, rhs);
+
+			return *this;
+		}
+
+
+
+		//!	Move constructor (C++11)
+		/*!
+		 *	When rhs is just an rvalue, C++11 can make use of move semantics,
+		 *	instead of copying values from memory to memory, the references
+		 *	are swapped, in the exact same way they were for the copy assignment
+		 *	operator.
+		 *
+		 *	This particular function also uses constructor delegation, a feature
+		 *	which is not present for all compiler's implementations of C++11.
+		 */
+		Waveform(Waveform&& rhs)
+			: Waveform()
+		{
+			swap(*this, rhs);
+		}
+
 		//______________________________________________________________________
 		//!	Copy-assignment operator
+		/*
 		Waveform&
 		operator= (const Waveform& rhs)
 		{
@@ -617,6 +815,7 @@ namespace PS {
 			}
 			return *this;
 		}
+		*/
 		
 		//
 		//	Compound Assignment Functions

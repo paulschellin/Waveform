@@ -7,6 +7,8 @@
 #include <boost/range.hpp>
 
 
+#define NORMALIZE_INVERSE 1
+
 #define FFTWTRANSFORM_USE_INIT 1
 
 /*
@@ -40,6 +42,11 @@ class FftwTransform {
 
 	fftw_plan forwardPlan;
 	fftw_plan inversePlan;
+
+	#ifdef NORMALIZE_INVERSE
+	
+
+	#endif
 
 
 	/*
@@ -99,7 +106,7 @@ class FftwTransform {
 	//!	Iterator bounds constructor
 	template <typename Iterator1, typename Iterator2>
 	FftwTransform (Iterator1 first1, Iterator1 last1, Iterator2 first2)
-#ifdef FFTWTRANSFORM_USE_INIT
+#ifndef FFTWTRANSFORM_USE_INIT
 		: forwardPlan( fftw_plan_dft_r2c_1d ( std::distance(first1, last1)
 											, &(*first1)
 											, reinterpret_cast<fftw_complex*>(&(*first2))
@@ -120,7 +127,7 @@ class FftwTransform {
 	//!	Boost::range constructor (Random Access Range)
 	template <typename RandomAccessRange1, typename RandomAccessRange2>
 	FftwTransform (RandomAccessRange1& range1, RandomAccessRange2& range2)
-#ifdef FFTWTRANSFORM_USE_INIT
+#ifndef FFTWTRANSFORM_USE_INIT
 		: forwardPlan( fftw_plan_dft_r2c_1d ( boost::distance(range1)
 											, &(*boost::begin(range1))
 											, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
@@ -153,6 +160,12 @@ class FftwTransform {
 	exec_inverse_transform (void)
 	{
 		fftw_execute(inversePlan);
+
+		#ifdef NORMALIZE_INVERSE
+		
+	
+		#endif
+	
 	}
 
 
