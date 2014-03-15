@@ -29,11 +29,16 @@ Documentation for Waveform is of the form used by Doxygen and there is a Doxyfil
 
 The Doxygen website created leaves something to be desired, but other fixes are higher priority.
 
-The test_Waveform.cpp file contains the beginnings of a testing suite for Waveform (using the Google Test framework).
+The Waveform_test.cpp file contains the beginnings of a testing suite for Waveform (using the Google Test framework).
 
-The actual FFTW wrapper can be found in FftwTransform.hpp, which can be tested using the source file test_FftwTransform.cpp and the makefile Makefile.FftwTransform.
+The actual FFTW wrapper can be found in FftwTransform.hpp, which can be tested using the source file FftwTransform_test.cpp.
 
 The tests can be run (assuming you have the Google Test framework installed) by typing:
-	make -f Makefile.Waveform clean test
-	make -f Makefile.FftwTransform clean test
+	make clean Waveform
+	make clean FftwTransform
+	./test_bin/Waveform_test
+	./test_bin/FftwTransform_test
+
+
+The features of this library are still in flux due to the decision to generalize the transforms with which Waveform is compatible. Many of the operators currently defined, especially the compound assignment operators were written with the assumption that the transform would be linear, but that cannot be guaranteed. It is likely that the compound assignment operators and other arithmetic operators will be deprecated because they no longer have obvious meaning when dealing with generalized transforms. The functionality can probably be better provided by explicit friend functions which accept one Waveform and one other container as arguments. The details of these friend functions are not trivial and will take time to complete.
 	

@@ -99,7 +99,8 @@ TEST_F(WaveformTest,FillConstructor)
 
 TEST_F(WaveformTest,CopyConstructor)
 {
-
+	
+	ADD_FAILURE() << "Not Yet Implemented!";
 }
 
 TEST_F(WaveformTest,TimeDomainRangeConstructor)
@@ -129,19 +130,30 @@ TEST_F(WaveformTest,FreqDomainRangeConstructor)
 TEST_F(WaveformTest,CopyAssignOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
 TEST_F(WaveformTest,AdditionAssignOperator)
 {
-	
+	ADD_FAILURE() << "Not Yet Implemented!";
+	/*
+	WaveformType lhs (tDomain_);
 
+	WaveformType rhs ();
+
+	lhs += rhs;
+
+
+	for (unsigned i = 0; i < 
+	*/
 }
 
 
 TEST_F(WaveformTest,SubtractionAssignOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
@@ -149,6 +161,7 @@ TEST_F(WaveformTest,SubtractionAssignOperator)
 TEST_F(WaveformTest,MultiplicationAssignOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
@@ -156,6 +169,7 @@ TEST_F(WaveformTest,MultiplicationAssignOperator)
 TEST_F(WaveformTest,DivisionAssignOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
@@ -163,6 +177,7 @@ TEST_F(WaveformTest,DivisionAssignOperator)
 TEST_F(WaveformTest,AdditionOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
@@ -170,6 +185,7 @@ TEST_F(WaveformTest,AdditionOperator)
 TEST_F(WaveformTest,SubtractionOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
@@ -177,6 +193,7 @@ TEST_F(WaveformTest,SubtractionOperator)
 TEST_F(WaveformTest,MultiplicationOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 
@@ -184,6 +201,7 @@ TEST_F(WaveformTest,MultiplicationOperator)
 TEST_F(WaveformTest,DivisionOperator)
 {
 	
+	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
 

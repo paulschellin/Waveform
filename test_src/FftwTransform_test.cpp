@@ -86,6 +86,8 @@ class FftwTransformTest : public ::testing::Test {
 
 TEST_F(FftwTransformTest, CTor1)
 {
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+
 	std::vector< std::complex<double> > fresult (tDomain_.size() / 2 + 1);
 	FftwTransform myFT = FftwTransform(tDomain_.begin(), tDomain_.end(), fresult.begin());
 
@@ -109,6 +111,7 @@ TEST_F(FftwTransformTest, CTor1)
 TEST_F(FftwTransformTest, CTor2)
 {
 
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
 	
 	std::vector< std::complex<double> > fresult (tDomain_.size() / 2 + 1);
 	FftwTransform myFT = FftwTransform(tDomain_, fresult);
@@ -137,6 +140,8 @@ TEST_F(FftwTransformTest, CTor2)
 TEST_F(FftwTransformTest, FwTrans)
 {
 
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+	
 	std::vector< std::complex<double> > fresult (tDomain_.size() / 2 + 1);
 	FftwTransform myFT = FftwTransform(tDomain_.begin(), tDomain_.end(), fresult.begin());
 
@@ -172,6 +177,8 @@ TEST_F(FftwTransformTest, FwTrans)
 TEST_F(FftwTransformTest, InvTrans)
 {
 
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+	
 	//std::vector<double> tresult ( 2 * (fDomain_.size() - 1) );
 	std::vector<double> tresult (tDomain_.size());
 	FftwTransform myFT = FftwTransform(tresult.begin(), tresult.end(), fDomain_.begin());
@@ -199,6 +206,8 @@ TEST_F(FftwTransformTest, ParameterForWaveform)
 {
 	//std::vector< std::complex<double> > fresult (tDomain_.size() / 2 + 1);
 
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+	
 	PS::Waveform< std::vector<double>
 				, std::vector< std::complex<double> >
 				, FftwTransform
@@ -217,6 +226,9 @@ TEST_F(FftwTransformTest, ParameterForWaveform)
 
 TEST_F(FftwTransformTest, FwdTransformInWaveform)
 {
+	
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+
 	//std::vector< std::complex<double> > fresult (tDomain_.size() / 2 + 1);
 
 	PS::Waveform< std::vector<double>
@@ -240,6 +252,9 @@ TEST_F(FftwTransformTest, FwdTransformInWaveform)
 
 TEST_F(FftwTransformTest, RvsTransformInWaveform)
 {
+	
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+	
 	std::vector<std::complex<double> > fDomainProper (fDomain_.begin(), fDomain_.begin() + 131);
 
 	PS::Waveform< std::vector<double>
