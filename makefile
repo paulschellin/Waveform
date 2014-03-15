@@ -15,8 +15,8 @@
 #LD=$(CXX)
 
 TESTS=Waveform FftwTransform
-#TEST_SOURCES=$(addprefix test_src/,$(addsuffix _test.cpp,$(TESTS)))
-TEST_SOURCES=$(addprefix test_,$(addsuffix .cpp,$(TESTS)))
+TEST_SOURCES=$(addprefix test_src/,$(addsuffix _test.cpp,$(TESTS)))
+#TEST_SOURCES=$(addprefix test_,$(addsuffix .cpp,$(TESTS)))
 
 
 #TEST_SOURCES=test_src/*.cpp
