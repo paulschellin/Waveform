@@ -8,13 +8,13 @@
 	 (none?)
  
 		Readability:
- [ ] Finish Doxygen comments.
+ [x] Finish Doxygen comments.
  [ ] Remove unnecessary commented code.
 		
 		Safety:
- [ ] Unit testing.
- [ ] Implement better range checking. (how will the monitoring iterators impact this?)
- [ ] Use exceptions and make sure memory checks are made.
+ [+] Unit testing.
+ [-] Implement better range checking. (how will the monitoring iterators impact this?)
+ [-] Use exceptions and make sure memory checks are made.
  
  
  [x] Make a better copy constructor(s), namely a (deep) copy constructor.
@@ -42,7 +42,7 @@
  [ ] Use some kind of smart pointer to encapsulate the validation checks, so
 		that the code never needs to be duplicated, except for iterators.
  
- [ ] Consider removing the state where validDomain_ == NeitherDomain. When the
+ [x] Consider removing the state where validDomain_ == NeitherDomain. When the
 		Waveform is in this state, many methods with throw an exception. I think
 		this is improper form, and that instead of throwing an exception when
 		an improper Waveform is used, the exception should be thrown when the
@@ -50,7 +50,7 @@
 		  - After default construction: either can be modified since one does
 				depend on the values of the other 
  
- [x] Consider changing "transform_" to be a shared_ptr. "reset()" can be called on
+ [-] Consider changing "transform_" to be a shared_ptr. "reset()" can be called on
 		the shared_ptr to allow the assignment operator (as well as domain
 		container Setter functions) to modify a Waveform object's size, etc.
 		instead of needing to start with a newly constructed Waveform object.
@@ -73,7 +73,7 @@
 		If possible to do without a runtime overhead, reducing that further to
 		only one would be ideal.
  
- [ ] Find out if shared_ptr<> is perhaps not the best to use, rather
+ [-] Find out if shared_ptr<> is perhaps not the best to use, rather
 		shared_array<> or something similar.
  
  
@@ -81,7 +81,7 @@
 		development of the monitoring/proxy/observer smart pointer template to
 		its own header file, perhaps along with the iterators.
 
- [ ] Perhaps transition from the ...USE_SHARED_PTR macro and check if __cplusplus
+ [-] Perhaps transition from the ...USE_SHARED_PTR macro and check if __cplusplus
  		is greater than 199711L?
 
  [ ] Determine if it is better to use a "flat" template parameter for the container
@@ -91,6 +91,8 @@
  [ ] Determine whether it is better to have so many iterator accessors brought to the surface
  		of the Waveform interface or if they should be left to the contained container
 		classes.
+
+ [ ] Move this to-do list to another file
 
  */
 
@@ -121,6 +123,13 @@
 #include <boost/range.hpp>
 
 
+#include <boost/assert.hpp>
+//#include <boost/accumulators/numeric/functional/vector.hpp>
+//using namespace boost::numeric::operators;
+
+
+#define WAVEFORM_USE_CBEGIN_CEND 1
+
 /*!
  *	\addtogroup PS
  *	@{
@@ -132,8 +141,8 @@ namespace PS {
 	using std::size_t;
 	
 	
-	using boost::begin;
-	using boost::end;
+	using boost::begin;		//	The begin() free function (not member function)
+	using boost::end;		//	The end() free function (not member function)
 
 	
 	
@@ -147,7 +156,13 @@ namespace PS {
 	 *
 	 *	This dummy class exists so that FFTW and other libraries aren't necessary
 	 *	to implement and test the Waveform class in the user's project.
+	 *	
+	 *	!!!!!	Important	!!!!!
+	 *	The transform functions provided must satisfy criteria to work properly
+	 *	with the Waveform class:
 	 *
+	 *		Unitary:	The functions must be unitary, that is, one function is the
+	 *					inverse of the other (specifically, <em>not the scaled inverse</em>.
 	 */
 	class PlaceholderTransformClass {
 	public:
@@ -219,7 +234,9 @@ namespace PS {
 			, /*template<typename...> class*/ typename FreqContainer = TimeContainer
 			, typename TransformT = PlaceholderTransformClass
 			>
-	class Waveform : boost::arithmetic1< Waveform<TimeContainer,FreqContainer,TransformT> > {
+	class Waveform
+//		: boost::arithmetic1< Waveform<TimeContainer,FreqContainer,TransformT> >
+	{
 		
 	public:
 
@@ -263,11 +280,16 @@ namespace PS {
 		 */
 		enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};
 		
+		//!	Indicates the valid domain array(s)
 		DomainSpecifier				validDomain_;
 
+		//!	Container object for the time series array
 		TimeContainer	timeSeries_;
+
+		//!	Container object for the frequency spectrum array
 		FreqContainer	freqSpectrum_;
 
+		//!	Transform class object which wraps the forward and inverse transform functions
 		TransformT		transform_;
 
 		
@@ -330,6 +352,12 @@ namespace PS {
 		
 		
 		//!	Returns the size of the time domain container
+		/*!
+		 *	<This function seems redundant and will likely be
+		 *	removed. Use Waveform::size() instead, since it's
+		 *	STL-compliant (though this class is difficult to
+		 *	design 100% in line with the STL idioms)>
+		 */
 		size_t
 		GetSize	(void) //const
 		{ return GetConstTimeSeries().size(); }
@@ -394,6 +422,38 @@ namespace PS {
 		{ ValidateDomain(FreqDomain); return freqSpectrum_; }
 		
 		
+
+
+		//
+		//
+		//		Iterator Access Functions
+		//
+		//
+
+		/*
+			Because of the nature of the Waveform class, I'm most likely
+			going to be removing the iterator functions from the library.
+
+			The iterators will still be available from the containers
+			themselves, of course, but because there is no obvious way
+			to have just a "begin()" or "end()" function instead of
+			"beginTime()" and "beginFreq()", and with there being no
+			impact on performance either way, there is no good reason to
+			keep the functions.
+
+			Issues with not being able to mark "const" a function at the
+			same time as checking the domain array validity (though there
+			is a way to do it -- check in the function itself and throw an
+			exception if the domain is not valid, but it's error prone and
+			ugly) makes it difficult to consider this portion of the library
+			intuitive or well-formed.
+
+			The only reason iterators would be very useful is if they
+			provided validation checks as well, but at the moment that
+			portion of the library is not yet completed.
+		 */
+
+
 		//!	Returns read-only iterator to the first element in the time domain
 		TimeConstIterator
 		beginTime (void) const
@@ -504,19 +564,105 @@ namespace PS {
 		//______________________________________________________________________
 		//!	Validate and ensure that the specified domain is up-to-date
 		/*!
+		 *	This function is responsible for properly performing transforms
+		 *	based on which domain(s) are valid as well as the domain which was
+		 *	requested by the programmer.
+		 *
+		 *	As a reminder, DomainSpecifier is an enumeration which can be set
+		 *	to one of 3 unique values: TimeDomain, FreqDomain, EitherDomain.
+		 *
+		 *	The variable validDomain_ maintains the current state of the system.
+		 *	Each of the values of validDomain_ and their meaning are described
+		 *	below:
+		 *
+		 *		TimeDomain		the time domain array timeSeries_ is valid,
+		 *						while the contents of freqSpectrum_ should be
+		 *						assumed to be out of date / invalid.
+		 *
+		 *		FreqDomain		the freq domain array freqSpectrum_ is valid,
+		 *						while the contents of timeSeries_ should be
+		 *						assumed to be out of date / invalid.
+		 *
+		 *		EitherDomain	this has to meanings, both of which ultimately
+		 *						can be treated the same way:
+		 *							1:	The last domain requested was done so
+		 *								using one of the "Const" accessor
+		 *								functions, so both of the domain arrays
+		 *								may be read and modified from this
+		 *								state.
+		 *							2:	The Waveform was just constructed and
+		 *								neither of the domain arrays contain
+		 *								"useful" (useful to the user)
+		 *								information. This means that either of
+		 *								the domain arrays may be written to
+		 *								without worrying about the validity of
+		 *								the other domain. However, this also
+		 *								means that neither of the domain arrays
+		 *								can be read to provide valid data, but
+		 *								since the user just initialized the
+		 *								object they should be aware in any
+		 *								circumstance that the arrays contain
+		 *								only garbage.
+		 *
+		 *	The function parameter toValidate can take on those same three
+		 *	values, this time with slightly different meanings:
+		 *
+		 *		TimeDomain		the time domain array was requested and
+		 *						transforms should be performed as needed in
+		 *						order to validate the domain.
+		 *
+		 *		FreqDomain		the freq domain array was requested and
+		 *						transforms should be performed as needed in
+		 *						order to validate the domain.
+		 *
+		 *		EitherDomain	the request for one of the domain arrays was
+		 *						of the "Const" variety, so no matter which
+		 *						domain the user wanted, both domain arrays
+		 *						will be valid after the call. Using
+		 *						EitherDomain like this allows the
+		 *						implementation to be much simpler.
+		 *
+		 *	Because this is the core mechanism of the library, it's important
+		 *	to note that the use of EitherDomain like this is fundamentally
+		 *	reliant on the transform class used for the Waveform classes'
+		 *	template parameter TransformT <em>providing two functions which
+		 *	(along with the dataset) form a group (by the definition of group
+		 *	theory)</em>. This means that the transform \f$\mathcal{F}\f$ and its
+		 *	inverse \f$\mathcal{F^{-1}}\f$ must be unitary -- that is, they must
+		 *	satisfy the composition criteria
+		 *
+		 *		\f$\mathcal{F^{-1}} \circ \mathcal{F} (x) = id (x)\f$ 
 		 *	
+		 *	(which is of course the definition of an inverse function!)
+		 *	
+		 *	This may seem obvious given the mathematical definition of, say,
+		 *	the Fourier transform, but one of the most popular implementations,
+		 *	FFTW3 (http://www.fftw.org), does not provide real-to-complex
+		 *	forward- and inverse-transform functions which are true inverses of
+		 *	the other -- the inverse transform of the "...dft_r2c_1d" transform
+		 *	function is the "...dft_c2r_1d" function which results in a scaled
+		 *	inverse. These transforms could be called "scaled unitary" or,
+		 *	but must be rescaled in order to function properly in this library.
+		 *
+		 *	You can use transforms which are involutary functions (such as the
+		 *	Laplace transform) by defining both "exec_transform()" and
+		 *	"exec_inverse_transform()" (both are required functions of a
+		 *	compatible TransformT class) to simply call the same function for
+		 *	both.
 		 */
 		int
 		ValidateDomain (const DomainSpecifier toValidate)
 		{
 			if (toValidate == validDomain_ || validDomain_ == EitherDomain) {
-				
+				//	There aren't any transforms to be performed
 			}
 			else if (toValidate == TimeDomain) {
-				if (validDomain_ == FreqDomain) { transform_.exec_inverse_transform(); }
+				//if (validDomain_ == FreqDomain)
+					transform_.exec_inverse_transform();
 			}
 			else if (toValidate == FreqDomain) {
-				if (validDomain_ == TimeDomain) { transform_.exec_transform(); }
+				//if (validDomain_ == TimeDomain)
+					transform_.exec_transform();
 			}
 			else if (toValidate == EitherDomain) {
 				if (validDomain_ == TimeDomain) {
@@ -590,7 +736,11 @@ namespace PS {
 		 *	and the compiler can basically optimize away the entire
 		 *	transaction using Return Value Optimization (RVO)
 		 */
+
+		//template <typename WaveformT>
 		Waveform&
+		//operator= (const Waveform& rhs)
+		//operator= (WaveformT rhs)
 		operator= (Waveform rhs)
 		{
 			swap(*this, rhs);
@@ -647,7 +797,7 @@ namespace PS {
 		//	two timeSeries objects.
 		//
 		//	My solution to this is to require that any container (such as
-		//	std::vector)also have the appropriate operators defined. Boost
+		//	std::vector) also have the appropriate operators defined. Boost
 		//	has definitions in boost/accumulators/numeric/functional/vector.hpp
 		//	in the namespace boost::numeric::operators.
 		////////////////////////////////////////////////////////////////////////
@@ -656,58 +806,87 @@ namespace PS {
 		//______________________________________________________________________
 		//!	Add another Waveform
 		/*!
-		 *	Because the Fourier Transform is linear, adding the Waveforms in
-		 *	either domain will produce identical results.
+		 *
 		 */
+		 /*
 		Waveform&
 		operator+= (Waveform& rhs)
 		{
-			this->GetTimeSeries() += rhs.GetTimeSeries();
+			//this->GetTimeSeries() += rhs.GetTimeSeries();
+			
+			//	Should assert that this->GetConstTimeSeries.size() == rhs.GetConstTimeSeries().size()
+			
+			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
+			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
+				this->GetTimeSeries()[i] += rhs.GetConstTimeSeries()[i];
+			}
+
 			return *this;
 		}
+		*/
 		
 
 		//______________________________________________________________________
 		//!	Subtract another Waveform
 		/*!
-		 *	Because the Fourier Transform is linear, subtracting the Waveforms
-		 *	in either domain will produce identical results.
+		 *
 		 */
+		 /*
 		Waveform&
 		operator-= (Waveform& rhs)
 		{
-			this->GetTimeSeries() -= rhs.GetTimeSeries();
+			//this->GetTimeSeries() -= rhs.GetConstTimeSeries();
+			
+			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
+			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
+				this->GetTimeSeries()[i] -= rhs.GetConstTimeSeries()[i];
+			}
+			
 			return *this;
 		}
+		*/
 		
 
 		//______________________________________________________________________
 		//!	Multiply by another Waveform
 		/*!
-		 *	Because multiplication in the time domain has relatively few
-		 *	physical uses (with the exception of convolution), this multiplies
-		 *	in the frequency domain.
+		 *
 		 */
+		/*
 		Waveform&
 		operator*= (Waveform& rhs)
 		{
-			this->GetFreqSpectrum() *= rhs.GetFreqSpectrum();
+			//this->GetFreqSpectrum() *= rhs.GetConstFreqSpectrum();
+			
+			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
+			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
+				this->GetTimeSeries()[i] *= rhs.GetConstTimeSeries()[i];
+			}
+			
 			return *this;
 		}
+		*/
 		
 
 		//______________________________________________________________________
 		//!	Divide by another Waveform
 		/*!
-		 *	Because multiplication in the time domain has relatively few
-		 *	physical uses (with the exception of convolution), this divides in
-		 *	the frequency domain.
+		 *
 		 */
+		/*
 		Waveform& operator/= (Waveform& rhs)
 		{
-			this->GetFreqSpectrum() /= rhs.GetFreqSpectrum();
+			//this->GetFreqSpectrum() /= rhs.GetConstFreqSpectrum();
+
+			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
+			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
+				this->GetTimeSeries()[i] /= rhs.GetConstTimeSeries()[i];
+			}
+
+
 			return *this;
 		}
+		 */
 		
 	};
 	

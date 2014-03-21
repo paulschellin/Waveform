@@ -12,6 +12,16 @@
 //
 //
 
+/*
+	To Do:
+	
+		[ ]	Use Global Environment functionality for the test arrays loaded from files
+		[ ] Use type-parameterized tests so that any container can be tested without
+				needing to duplicate code
+		[ ]	Use value-parameterized tests so that test arrays can be individually passed
+				to the tests for verification
+ */
+
 
 #include <iostream>
 #include <fstream>
@@ -35,6 +45,21 @@ typedef std::vector< std::complex<double> > ComplexType;
 typedef Waveform<std::vector<double>, std::vector< std::complex<double> > > WaveformType;
 
 
+template <typename T>
+std::vector<T>
+parse_dat_file (std::string fileName)
+{
+	std::ifstream ifs(fileName.c_str());
+	assert(ifs.good());
+
+
+	std::vector<T> result { std::istream_iterator<T>(ifs)
+						  , std::istream_iterator<T>() };
+
+	return result;
+}
+
+
 class WaveformTest : public ::testing::Test {
 	protected:
 	
@@ -54,22 +79,47 @@ class WaveformTest : public ::testing::Test {
 	SetUp()
 	{
 		/*
-		std::ofstream ofst("bs_WaveformTest_tDomain_.txt");
+		std::ofstream ofst("bs_WaveformTest_tDomainExampleData_.txt");
 		boost::archive::text_oarchive oat (ofst);
-		oat & tDomain_;
+		oat & tDomainExampleData_;
 	
-		std::ofstream ofsf("bs_WaveformTest_fDomain_.txt");
+		std::ofstream ofsf("bs_WaveformTest_fDomainExampleData_.txt");
 		boost::archive::text_oarchive oaf (ofsf);
-		oaf & fDomain_;
+		oaf & fDomainExampleData_;
 		*/
 
 		std::ifstream ifs_tDomain("test_data/bs_WaveformTest_tDomain_.txt");
 		boost::archive::text_iarchive ia_tDomain(ifs_tDomain);
-		ia_tDomain >> tDomain_;
+		ia_tDomain >> tDomainExampleData_;
 
 		std::ifstream ifs_fDomain("test_data/bs_WaveformTest_fDomain_.txt");
 		boost::archive::text_iarchive ia_fDomain(ifs_fDomain);
-		ia_fDomain >> fDomain_;
+		ia_fDomain >> fDomainExampleData_;
+
+
+		stepFn1024_real = parse_dat_file<double>("test_data/stepFn1024_real.dat");
+		stepFn1024_complex = parse_dat_file<std::complex<double> >("test_data/stepFn1024_complex.dat");
+
+		diracFn1024_real = parse_dat_file<double>("test_data/diracFn1024_real.dat");
+		diracFn1024_complex = parse_dat_file<std::complex<double> >("test_data/diracFn1024_complex.dat");
+
+		triangleFn1024_real = parse_dat_file<double>("test_data/triangleFn1024_real.dat");
+		triangleFn1024_complex = parse_dat_file<std::complex<double> >("test_data/triangleFn1024_complex.dat");
+
+		squareFn1024_real = parse_dat_file<double>("test_data/squareFn1024_real.dat");
+		squareFn1024_complex = parse_dat_file<std::complex<double> >("test_data/squareFn1024_complex.dat");
+
+
+		testArrays_real.push_back(stepFn1024_real);
+		testArrays_real.push_back(diracFn1024_real);
+		testArrays_real.push_back(triangleFn1024_real);
+		testArrays_real.push_back(squareFn1024_real);
+
+		testArrays_complex.push_back(stepFn1024_complex);
+		testArrays_complex.push_back(diracFn1024_complex);
+		testArrays_complex.push_back(triangleFn1024_complex);
+		testArrays_complex.push_back(squareFn1024_complex);
+
 
 	}
 
@@ -81,9 +131,30 @@ class WaveformTest : public ::testing::Test {
 	}
 
 	
-	RealType tDomain_;
+	RealType tDomainExampleData_;
 		
-	ComplexType fDomain_;
+	ComplexType fDomainExampleData_;
+
+
+
+	std::vector<double> 				stepFn1024_real;
+	std::vector< std::complex<double> > stepFn1024_complex;
+
+	std::vector<double> 				diracFn1024_real;
+	std::vector< std::complex<double> > diracFn1024_complex;
+
+	std::vector<double> 				triangleFn1024_real;
+	std::vector< std::complex<double> > triangleFn1024_complex;
+	
+	std::vector<double> 				squareFn1024_real;
+	std::vector< std::complex<double> > squareFn1024_complex;
+
+	std::vector< std::vector<double> >					testArrays_real;
+	std::vector< std::vector<std::complex<double> > > 	testArrays_complex;
+
+
+	
+	//RealType tDomain_;
 };
 
 
@@ -99,30 +170,45 @@ TEST_F(WaveformTest,FillConstructor)
 
 TEST_F(WaveformTest,CopyConstructor)
 {
+	WaveformType originalWfm (tDomainExampleData_);
+
 	
-	ADD_FAILURE() << "Not Yet Implemented!";
+	WaveformType copiedWfm (originalWfm);
+	
+	EXPECT_EQ(copiedWfm.size(), originalWfm.size());
+
+	for (unsigned i = 0; i < copiedWfm.size(); ++i) {
+		EXPECT_EQ(copiedWfm.GetConstTimeSeries().at(i) , originalWfm.GetConstTimeSeries().at(i));
+	}
+
+	EXPECT_EQ(copiedWfm.size(), originalWfm.size());
+
+	for (unsigned i = 0; i < copiedWfm.GetConstFreqSpectrum().size(); ++i) {
+		EXPECT_EQ(copiedWfm.GetConstFreqSpectrum().at(i) , originalWfm.GetConstFreqSpectrum().at(i));
+	}
+
 }
 
 TEST_F(WaveformTest,TimeDomainRangeConstructor)
 {
-	WaveformType timedomaintest (tDomain_);
+	WaveformType timedomaintest (tDomainExampleData_);
 
-	EXPECT_EQ(tDomain_.size(), timedomaintest.size());
+	EXPECT_EQ(tDomainExampleData_.size(), timedomaintest.size());
 
-	for (unsigned i = 0; i < tDomain_.size(); ++i) {
-		EXPECT_EQ(tDomain_[i] , timedomaintest.GetConstTimeSeries().at(i));
+	for (unsigned i = 0; i < tDomainExampleData_.size(); ++i) {
+		EXPECT_EQ(tDomainExampleData_[i] , timedomaintest.GetConstTimeSeries().at(i));
 	}
 
 }
 
 TEST_F(WaveformTest,FreqDomainRangeConstructor)
 {
-	WaveformType freqdomaintest (fDomain_);
+	WaveformType freqdomaintest (fDomainExampleData_);
 
-	EXPECT_EQ(fDomain_.size(), freqdomaintest.size()/2 + 1);
+	EXPECT_EQ(fDomainExampleData_.size(), freqdomaintest.size()/2 + 1);
 	
-	for (unsigned i = 0; i < fDomain_.size(); ++i) {
-		EXPECT_EQ(fDomain_[i] , freqdomaintest.GetConstFreqSpectrum().at(i));
+	for (unsigned i = 0; i < fDomainExampleData_.size(); ++i) {
+		EXPECT_EQ(fDomainExampleData_[i] , freqdomaintest.GetConstFreqSpectrum().at(i));
 	}
 
 }
@@ -132,28 +218,58 @@ TEST_F(WaveformTest,CopyAssignOperator)
 	
 	ADD_FAILURE() << "Not Yet Implemented!";
 
+/*
+	WaveformType originalWfm (tDomainExampleData_);
+
+	
+	WaveformType copiedWfm (originalWfm.size());
+	
+	//copiedWfm = originalWfm;
+	
+	EXPECT_EQ(copiedWfm.size(), originalWfm.size());
+
+	for (unsigned i = 0; i < copiedWfm.size(); ++i) {
+		EXPECT_EQ(copiedWfm.GetConstTimeSeries().at(i) , originalWfm.GetConstTimeSeries().at(i));
+	}
+
+	EXPECT_EQ(copiedWfm.size(), originalWfm.size());
+
+	for (unsigned i = 0; i < copiedWfm.GetConstFreqSpectrum().size(); ++i) {
+		EXPECT_EQ(copiedWfm.GetConstFreqSpectrum().at(i) , originalWfm.GetConstFreqSpectrum().at(i));
+	}
+*/
 }
 
+/*
 TEST_F(WaveformTest,AdditionAssignOperator)
 {
-	ADD_FAILURE() << "Not Yet Implemented!";
-	/*
-	WaveformType lhs (tDomain_);
+	//ADD_FAILURE() << "Not Yet Implemented!";
+	
+	WaveformType lhs (stepFn1024_real);
 
-	WaveformType rhs ();
+	WaveformType rhs (triangleFn1024_real);
 
 	lhs += rhs;
 
-
-	for (unsigned i = 0; i < 
-	*/
+	for (unsigned i (0); i < lhs.size(); ++i) {
+		EXPECT_EQ(lhs.GetConstTimeSeries().at(i), stepFn1024_real.at(i) + triangleFn1024_real.at(i));
+	}
 }
 
 
 TEST_F(WaveformTest,SubtractionAssignOperator)
 {
 	
-	ADD_FAILURE() << "Not Yet Implemented!";
+	//ADD_FAILURE() << "Not Yet Implemented!";
+	WaveformType lhs (stepFn1024_real);
+
+	WaveformType rhs (triangleFn1024_real);
+
+	lhs -= rhs;
+
+	for (unsigned i (0); i < lhs.size(); ++i) {
+		EXPECT_EQ(lhs.GetConstTimeSeries().at(i), stepFn1024_real.at(i) - triangleFn1024_real.at(i));
+	}
 
 }
 
@@ -161,7 +277,16 @@ TEST_F(WaveformTest,SubtractionAssignOperator)
 TEST_F(WaveformTest,MultiplicationAssignOperator)
 {
 	
-	ADD_FAILURE() << "Not Yet Implemented!";
+	//ADD_FAILURE() << "Not Yet Implemented!";
+	WaveformType lhs (stepFn1024_real);
+
+	WaveformType rhs (triangleFn1024_real);
+
+	lhs *= rhs;
+
+	for (unsigned i (0); i < lhs.size(); ++i) {
+		EXPECT_EQ(lhs.GetConstTimeSeries().at(i), stepFn1024_real.at(i) * triangleFn1024_real.at(i));
+	}
 
 }
 
@@ -169,7 +294,16 @@ TEST_F(WaveformTest,MultiplicationAssignOperator)
 TEST_F(WaveformTest,DivisionAssignOperator)
 {
 	
-	ADD_FAILURE() << "Not Yet Implemented!";
+	//ADD_FAILURE() << "Not Yet Implemented!";
+	WaveformType lhs (stepFn1024_real);
+
+	WaveformType rhs (std::vector<double>(stepFn1024_real.size(), 2.));
+
+	lhs /= rhs;
+
+	for (unsigned i (0); i < lhs.size(); ++i) {
+		EXPECT_EQ(lhs.GetConstTimeSeries().at(i), stepFn1024_real.at(i) / 2. );
+	}
 
 }
 
@@ -204,7 +338,7 @@ TEST_F(WaveformTest,DivisionOperator)
 	ADD_FAILURE() << "Not Yet Implemented!";
 
 }
-
+*/
 
 /*TEST_F(WaveformTest,Operator)
 {

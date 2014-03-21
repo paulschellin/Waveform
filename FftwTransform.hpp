@@ -167,9 +167,9 @@ class Fftw3_Dft_1d_Normalized {
 	fftw_plan forwardPlan;
 	fftw_plan inversePlan;
 
-	double*	first_;
-	double*	last_;
-
+	std::complex<double>*	first_;
+	std::complex<double>*	last_;
+	std::size_t				length_;
 
 	/*
 		This init_ function is supposed to replace the lengthy initialization lists
@@ -186,17 +186,19 @@ class Fftw3_Dft_1d_Normalized {
 	void
 	init_ (Iterator1 first1, Iterator1 last1, Iterator2 first2)
 	{
-		forwardPlan = fftw_plan_dft_r2c_1d (std::distance(first1, last1)
+		length_ = std::distance(first1, last1);
+
+		forwardPlan = fftw_plan_dft_r2c_1d  ( length_
 											, &(*first1)
 											, reinterpret_cast<fftw_complex*>(&(*first2))
 											, FFTW_ESTIMATE);
 
-		inversePlan = fftw_plan_dft_c2r_1d ( std::distance(first1, last1)
+		inversePlan = fftw_plan_dft_c2r_1d  ( length_
 											, reinterpret_cast<fftw_complex*>(&(*first2))
 											, &(*first1)
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
-		first_ = first1;
-		last_ = last1;
+		first_ = &(*first2);
+		last_ = &(*(first2 + length / 2 + 1));
 	}
 
 
@@ -284,9 +286,7 @@ class Fftw3_Dft_1d_Normalized {
 	{
 		fftw_execute(inversePlan);
 
-		//unsigned length_ (unsigned(last_) - unsigned(first_) + 1);
-		std::size_t length_ (std::size_t(last_) - std::size_t(first_) + 1);
-		std::for_each(first_, last_, [=](double& x) {x /= length_;});
+		std::for_each(first_, last_, [=](std::complex<double>& x) {x /= length_;});
 	}
 };
 

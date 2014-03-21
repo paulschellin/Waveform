@@ -22,8 +22,34 @@
 #include <boost/serialization/complex.hpp>
 
 
+/*
+	To Do:
+	
+		[ ]	Use Global Environment functionality for the test arrays loaded from files
+		[ ] Use type-parameterized tests so that any container can be tested without
+				needing to duplicate code
+		[ ]	Use value-parameterized tests so that test arrays can be individually passed
+				to the tests for verification
+ */
+
+
 
 namespace {
+
+template <typename T>
+std::vector<T>
+parse_dat_file (std::string fileName)
+{
+	std::ifstream ifs(fileName.c_str());
+	assert(ifs.good());
+
+
+	std::vector<T> result { std::istream_iterator<T>(ifs)
+						  , std::istream_iterator<T>() };
+
+	return result;
+}
+
 
 class FftwTransformTest : public ::testing::Test {
 	protected:
@@ -63,6 +89,40 @@ class FftwTransformTest : public ::testing::Test {
 		std::ifstream ifsf("test_data/bs_FftwTransformTest_fDomain_.txt");
 		boost::archive::text_iarchive iaf (ifsf);
 		iaf & fDomain_;
+
+
+		stepFn1024_real = parse_dat_file<double>("test_data/stepFn1024_real.dat");
+		stepFn1024_complex = parse_dat_file<std::complex<double> >("test_data/stepFn1024_complex.dat");
+
+		diracFn1024_real = parse_dat_file<double>("test_data/diracFn1024_real.dat");
+		diracFn1024_complex = parse_dat_file<std::complex<double> >("test_data/diracFn1024_complex.dat");
+
+		triangleFn1024_real = parse_dat_file<double>("test_data/triangleFn1024_real.dat");
+		triangleFn1024_complex = parse_dat_file<std::complex<double> >("test_data/triangleFn1024_complex.dat");
+
+		squareFn1024_real = parse_dat_file<double>("test_data/squareFn1024_real.dat");
+		squareFn1024_complex = parse_dat_file<std::complex<double> >("test_data/squareFn1024_complex.dat");
+
+
+		testArrays_real.push_back(stepFn1024_real);
+		testArrays_real.push_back(diracFn1024_real);
+		testArrays_real.push_back(triangleFn1024_real);
+		testArrays_real.push_back(squareFn1024_real);
+
+		testArrays_complex.push_back(stepFn1024_complex);
+		testArrays_complex.push_back(diracFn1024_complex);
+		testArrays_complex.push_back(triangleFn1024_complex);
+		testArrays_complex.push_back(squareFn1024_complex);
+
+
+		/*
+		for (auto ar : testArrays_real)
+			std::cout << ar.size() << std::endl;
+
+		for (auto ar : testArrays_complex)
+			std::cout << ar.size() << std::endl;
+		*/
+
 	}
 
 	virtual
@@ -80,9 +140,32 @@ class FftwTransformTest : public ::testing::Test {
 
 
 	std::vector< std::complex<double> > fDomain_;
+
+
+
+	std::vector<double> 				stepFn1024_real;
+	std::vector< std::complex<double> > stepFn1024_complex;
+
+	std::vector<double> 				diracFn1024_real;
+	std::vector< std::complex<double> > diracFn1024_complex;
+
+	std::vector<double> 				triangleFn1024_real;
+	std::vector< std::complex<double> > triangleFn1024_complex;
+	
+	std::vector<double> 				squareFn1024_real;
+	std::vector< std::complex<double> > squareFn1024_complex;
+
+	std::vector< std::vector<double> >					testArrays_real;
+	std::vector< std::vector<std::complex<double> > > 	testArrays_complex;
+
 };
 
 
+
+/*
+typedef testing::Types<Fftw3_Dft_1d, Fftw3_Dft_1d_Normalized> Implementations;
+TYPED_TEST_CASE(FftwTransformTest, Implementations);
+*/
 
 TEST_F(FftwTransformTest, CTor1)
 {
@@ -139,7 +222,6 @@ TEST_F(FftwTransformTest, CTor2)
 
 TEST_F(FftwTransformTest, FwTrans)
 {
-
 	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
 	
 	std::vector< std::complex<double> > fresult (tDomain_.size() / 2 + 1);
@@ -173,6 +255,38 @@ TEST_F(FftwTransformTest, FwTrans)
 
 
 }
+
+
+TEST_F(FftwTransformTest, FwTransTestArrays)
+{
+	typedef Waveform::Transform::Fftw3_Dft_1d FftwTransform;
+
+	//double new_nearVal = nearVal * 1.;
+
+	for (std::size_t iter_array (0); iter_array < testArrays_real.size(); ++iter_array) {
+		std::vector< std::complex<double> > fresult (testArrays_real.at(iter_array).size() / 2 + 1);
+
+		FftwTransform myFT = FftwTransform(testArrays_real.at(iter_array).begin(), testArrays_real.at(iter_array).end(), fresult.begin());
+
+		myFT.exec_transform();
+
+		EXPECT_EQ (fresult.size(), testArrays_complex.at(iter_array).size()) << iter_array;
+
+		for (unsigned iter (0); iter < fresult.size(); ++iter)
+		{
+		/*
+		EXPECT_DOUBLE_EQ( std::real(fresult.at(iter)), std::real(fDomain_.at(iter)) ) << "\t@\t" << iter;
+		EXPECT_DOUBLE_EQ( std::imag(fresult.at(iter)), std::imag(fDomain_.at(iter)) ) << "\t@\t" << iter;
+		*/
+		
+		EXPECT_NEAR( std::real(fresult.at(iter)), std::real(testArrays_complex.at(iter_array).at(iter)), nearVal ) << "\t@\t" << iter;
+		EXPECT_NEAR( std::imag(fresult.at(iter)), std::imag(testArrays_complex.at(iter_array).at(iter)), nearVal ) << "\t@\t" << iter;
+		
+		}
+	}
+}
+
+
 
 TEST_F(FftwTransformTest, InvTrans)
 {
