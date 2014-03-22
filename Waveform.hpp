@@ -2,98 +2,6 @@
  Waveform.hpp
  Waveform class provides functions frequently used in the RF simulations.
  Written by Paul Schellin at the Ohio State University, 2012-2013
- 
- To Do:
-		Fixes:
-	 (none?)
- 
-		Readability:
- [x] Finish Doxygen comments.
- [ ] Remove unnecessary commented code.
-		
-		Safety:
- [+] Unit testing.
- [-] Implement better range checking. (how will the monitoring iterators impact this?)
- [-] Use exceptions and make sure memory checks are made.
- 
- 
- [x] Make a better copy constructor(s), namely a (deep) copy constructor.
- 
- 
- [x] Convert class to a template of either:
-		  - A container template
-		  - Two container (complete) types
-		Default would be DiscreteSeries, but should be designed to accept any
-		STL-container complient class/template. This may require DiscreteSeries
-		to be modified to be complient itself.
- 
- [x] Consider removing "samplingRateHz_", since it's included in DiscreteSeries
-		and may or may not be included in the container(s) passed as template
-		parameters.
- 
- [x] Consider removing "numTimeBins_" as its functionality is duplicated in
-		FftwDft1d in public member FftwDft1d::numElem.
-		(I know it seems silly to care about small objects and PODs like this,
-		but duplication means that there are multiple initializations,
-		modification functions, and syncing to keep track of, for no gain)
- 
- [ ] Define iterators of various sorts to manage and check for domain validity.
- 
- [ ] Use some kind of smart pointer to encapsulate the validation checks, so
-		that the code never needs to be duplicated, except for iterators.
- 
- [x] Consider removing the state where validDomain_ == NeitherDomain. When the
-		Waveform is in this state, many methods with throw an exception. I think
-		this is improper form, and that instead of throwing an exception when
-		an improper Waveform is used, the exception should be thrown when the
-		Waveform was "made improper". Conceptualizing the possible states:
-		  - After default construction: either can be modified since one does
-				depend on the values of the other 
- 
- [-] Consider changing "transform_" to be a shared_ptr. "reset()" can be called on
-		the shared_ptr to allow the assignment operator (as well as domain
-		container Setter functions) to modify a Waveform object's size, etc.
-		instead of needing to start with a newly constructed Waveform object.
-		Because any stl-complient container implementing "resize(...)" can
-		intelligently handle changes in capacity, reducing the cost of
-		shrinking or expanding according to a change in sample length/depth.
- 
- [x] Reduce the number of constructor overloads. Currently there are 7:
-		  - default constructor (allocating)
-		  - size-based constructor (allocating)
-		  - copy constructor (allocating && copying)
-		  - freq DiscreteSeries copy constructor (allocating && copying)
-		  - time DiscreteSeries copy constructor (allocating && copying)
-		  - freq std::vector copy constructor (allocating && copying)
-		  - time std::vector copy constructor (allocating && copying)
-		The last four should be reduced to two constructors, each accepting one
-		of the Waveform's template parameters (container types in this case).
-		This means that the conversion to a container class must take place
-		outside of the Waveform class.
-		If possible to do without a runtime overhead, reducing that further to
-		only one would be ideal.
- 
- [-] Find out if shared_ptr<> is perhaps not the best to use, rather
-		shared_array<> or something similar.
- 
- 
- [x] To keep the header file small, it may make sense to move the definition and
-		development of the monitoring/proxy/observer smart pointer template to
-		its own header file, perhaps along with the iterators.
-
- [-] Perhaps transition from the ...USE_SHARED_PTR macro and check if __cplusplus
- 		is greater than 199711L?
-
- [ ] Determine if it is better to use a "flat" template parameter for the container
- 		types or if nesting (i.e. template < template <typename...> class ContainerT, ...).
-		It maybe be wise to use static asserts as well.
-
- [ ] Determine whether it is better to have so many iterator accessors brought to the surface
- 		of the Waveform interface or if they should be left to the contained container
-		classes.
-
- [ ] Move this to-do list to another file
-
  */
 
 #ifndef WAVEFORM_HPP
@@ -107,13 +15,11 @@
 #include <functional>
 #include <iterator>
 #include <numeric>
-#include <fstream>
-#include <vector>
+//#include <fstream>
 #include <string>
-#include <complex>
 #include <cmath>
-#include <iomanip>
-#include <sstream>
+//#include <iomanip>
+//#include <sstream>
 
 
 // Boost header files
@@ -122,10 +28,7 @@
 
 #include <boost/range.hpp>
 
-
 #include <boost/assert.hpp>
-//#include <boost/accumulators/numeric/functional/vector.hpp>
-//using namespace boost::numeric::operators;
 
 
 #define WAVEFORM_USE_CBEGIN_CEND 1
@@ -137,7 +40,6 @@
 
 //! Namespace PS is the namespace used for classes, etc. created by the author (Paul Schellin)
 namespace PS {
-	using std::complex;
 	using std::size_t;
 	
 	
@@ -165,17 +67,7 @@ namespace PS {
 	 *					inverse of the other (specifically, <em>not the scaled inverse</em>.
 	 */
 	class PlaceholderTransformClass {
-	public:
-
-		//!	Size and Domain "begin()" constructor
-		/*	Deprecated due to lack of cohesion with STL idioms
-		template <typename Iterator1, typename Iterator2>
-		PlaceholderTransformClass (const unsigned size, Iterator1 first1, Iterator2 first2)
-		{
-
-		}
-		*/
-	
+	  public:
 		//!	Iterator bounds constructor
 		template <typename Iterator1, typename Iterator2>
 		PlaceholderTransformClass (Iterator1 first1, Iterator1 last1, Iterator2 first2)
@@ -234,11 +126,18 @@ namespace PS {
 			, /*template<typename...> class*/ typename FreqContainer = TimeContainer
 			, typename TransformT = PlaceholderTransformClass
 			>
-	class Waveform
-//		: boost::arithmetic1< Waveform<TimeContainer,FreqContainer,TransformT> >
-	{
-		
-	public:
+			/*
+			< typename T1
+			, typename T2 = T1
+			, template <typename ...ArgsX1> class Container1 = std::vector
+			, template <typename ...ArgsX2> class Container2 = Container1
+			//, typename ...Args1
+			//, typename ...Args2
+			>
+			*/
+
+	class Waveform {
+	  public:
 
 		//!	The type of the time domain
 		typedef typename TimeContainer::value_type	TimeT;
@@ -270,7 +169,7 @@ namespace PS {
 		
 		
 		
-	private:
+	  private:
 
 		//!
 		/*!
@@ -291,9 +190,7 @@ namespace PS {
 
 		//!	Transform class object which wraps the forward and inverse transform functions
 		TransformT		transform_;
-
-		
-	private: 
+ 
 		//!	Default constructor
 		/*! 
 		 *	Because this initializes Waveform::transform_, which cannot be modified
@@ -304,12 +201,14 @@ namespace PS {
 		 *	more safely. That would make Waveform Assignable with much less
 		 * manual dynamic memory handling.
 		 */
+		Waveform(void) = delete;
+		/*
 		Waveform(void)
 			: validDomain_(EitherDomain)
 		{ }
+		*/
 		
-		
-	public:
+	  public:
 		
 		//! Fill constructor
 		Waveform(const size_t count)
@@ -317,7 +216,10 @@ namespace PS {
 			, timeSeries_(count)
 			, freqSpectrum_(count)
 			, transform_(timeSeries_, freqSpectrum_)
-		{ }
+		{ 
+			if (timeSeries_.size()%2)
+				throw std::length_error("Waveform: The array length was not a multiple of 2!");
+		}
 
 
 		//! Copy constructor
@@ -326,17 +228,22 @@ namespace PS {
 			, timeSeries_(toCopy.timeSeries_)
 			, freqSpectrum_(toCopy.freqSpectrum_)
 			, transform_(timeSeries_, freqSpectrum_)
-		{ }
+		{
+			if (timeSeries_.size()%2)
+				throw std::length_error("Waveform: The array length was not a multiple of 2!");
+		}
 		
 		
 		//! Time domain copy constructor
 		explicit Waveform(const TimeContainer& toCopy)
 			: validDomain_(TimeDomain)
 			, timeSeries_(toCopy)
-			, freqSpectrum_(timeSeries_.size()/2 + 1)	// This might turn out to be wrong for non-even lengths, right?
+			, freqSpectrum_(timeSeries_.size()/2 + 1)
 			, transform_(timeSeries_, freqSpectrum_)
-		{ }
-		
+		{
+			if (timeSeries_.size()%2)
+				throw std::length_error("Waveform: The array length was not a multiple of 2!");
+		}
 		
 		//! Frequency domain copy constructor
 		explicit Waveform(const FreqContainer& toCopy)
@@ -344,8 +251,10 @@ namespace PS {
 			, timeSeries_((toCopy.size() - 1) * 2)
 			, freqSpectrum_(toCopy)
 			, transform_(timeSeries_, freqSpectrum_)
-		{ }
-			
+		{
+			if (timeSeries_.size()%2)
+				throw std::length_error("Waveform: The array length was not a multiple of 2!");
+		}
 		
 		//!	Default destructor
 		~Waveform (void) {}
@@ -451,115 +360,10 @@ namespace PS {
 			The only reason iterators would be very useful is if they
 			provided validation checks as well, but at the moment that
 			portion of the library is not yet completed.
+		 
+		 
+		 	[ Iterator access functions have been removed ]
 		 */
-
-
-		//!	Returns read-only iterator to the first element in the time domain
-		TimeConstIterator
-		beginTime (void) const
-		{ return TimeConstIterator (boost::begin(timeSeries_)); }
-	
-
-		//!	Returns read-only iterator to the first element in the freq domain
-		FreqConstIterator
-		beginFreq (void) const
-		{ return FreqConstIterator (boost::begin(freqSpectrum_)); }
-	
-
-		//!	Returns read-only iterator to one past the last element
-		TimeConstIterator
-		endTime (void) const
-		{ return TimeConstIterator (boost::end(timeSeries_)); }
-	
-
-		//!	Returns read-only iterator to one past the last element
-		FreqConstIterator
-		endFreq (void) const
-		{ return FreqConstIterator (boost::end(freqSpectrum_)); }
-		
-		
-		//!	Returns read-only iterator to the first element in the time domain
-		TimeIterator
-		beginTime (void)
-		{
-			ValidateDomain(TimeDomain);
-			return TimeIterator (boost::begin(timeSeries_));
-		}
-		
-
-		//!	Returns read-only iterator to the first element in the freq domain
-		FreqIterator
-		beginFreq (void)
-		{
-			ValidateDomain(FreqDomain);
-			return FreqIterator (boost::begin(freqSpectrum_));
-		}
-		
-
-		//!	Returns read-only iterator to one past the last element
-		TimeIterator
-		endTime (void)
-		{
-			ValidateDomain(TimeDomain);
-			return TimeIterator (boost::end(timeSeries_));
-		}
-		
-
-		//!	Returns read-only iterator to one past the last element
-		FreqIterator
-		endFreq (void)
-		{
-			ValidateDomain(FreqDomain);
-			return FreqIterator (boost::end(freqSpectrum_));
-		}
-		
-		
-		//!	Returns read-only iterator to the first element in the time domain
-		TimeConstIterator
-		cbeginTime (void) const
-		{
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return TimeConstIterator (boost::begin(timeSeries_));
-		#else
-			return TimeConstIterator (timeSeries_.cbegin());
-		#endif
-		}
-		
-		//!	Returns read-only iterator to the first element in the freq domain
-		FreqConstIterator
-		cbeginFreq (void) const
-		{
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return FreqConstIterator (begin(freqSpectrum_));
-		#else
-			return FreqConstIterator (freqSpectrum_.cbegin());
-		#endif
-		}
-
-
-		//!	Returns read-only iterator to one past the last element
-		TimeConstIterator
-		cendTime (void) const
-		{
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return TimeConstIterator (end(timeSeries_));
-		#else
-			return TimeConstIterator (timeSeries_.cend());
-		#endif
-		}
-
-
-		//!	Returns read-only iterator to one past the last element
-		FreqConstIterator
-		cendFreq (void) const
-		{
-		#ifndef WAVEFORM_USE_CBEGIN_CEND
-			return FreqConstIterator (end(freqSpectrum_));
-		#else
-			return FreqConstIterator (freqSpectrum_.cend());
-		#endif
-		}
-		
 
 		//______________________________________________________________________
 		//!	Validate and ensure that the specified domain is up-to-date
@@ -628,10 +432,10 @@ namespace PS {
 		 *	template parameter TransformT <em>providing two functions which
 		 *	(along with the dataset) form a group (by the definition of group
 		 *	theory)</em>. This means that the transform \f$\mathcal{F}\f$ and its
-		 *	inverse \f$\mathcal{F^{-1}}\f$ must be unitary -- that is, they must
+		 *	inverse \f$\mathcal{F}^{-1}\f$ must be unitary -- that is, they must
 		 *	satisfy the composition criteria
 		 *
-		 *		\f$\mathcal{F^{-1}} \circ \mathcal{F} (x) = id (x)\f$ 
+		 *		\f$\mathcal{F}^{-1} \circ \mathcal{F} (x) = id (x)\f$ 
 		 *	
 		 *	(which is of course the definition of an inverse function!)
 		 *	
@@ -657,17 +461,16 @@ namespace PS {
 				//	There aren't any transforms to be performed
 			}
 			else if (toValidate == TimeDomain) {
-				//if (validDomain_ == FreqDomain)
-					transform_.exec_inverse_transform();
+				transform_.exec_inverse_transform();
 			}
 			else if (toValidate == FreqDomain) {
-				//if (validDomain_ == TimeDomain)
-					transform_.exec_transform();
+				transform_.exec_transform();
 			}
 			else if (toValidate == EitherDomain) {
 				if (validDomain_ == TimeDomain) {
 					transform_.exec_transform();
-				} else if (validDomain_ == FreqDomain) {
+				} else // if (validDomain_ == FreqDomain)
+				{
 					transform_.exec_inverse_transform();
 				}
 			}
@@ -764,131 +567,32 @@ namespace PS {
 		{
 			swap(*this, rhs);
 		}
-
-		
-		//
-		//	Compound Assignment Functions
-		//
-		
-		////////////////////////////////////////////////////////////////////////
-		//					Arithmetic Operator Overloads
-		////////////////////////////////////////////////////////////////////////
-		//	Because Waveform requires two containers of floating-based types,
-		//	we assume that the arithmetic operators work element-wise on these
-		//	containers.
-		//
-		//	It would be ideal to be able to define the actual operators as a
-		//	iterator-based implementation, such as:
-		//
-		//		operator+= (rhs)
-		//		{
-		//			std::transform(	  cbeginTime()
-		//							, cendTime()
-		//							, rhs.cbeginTime()
-		//							, beginTime()
-		//							, std::plus<TimeT, FreqT>()
-		//						  );
-		//			return *this;
-		//		}
-		//
-		//	However, doing this would prevent specialization of the operators
-		//	at a container level. For example, DiscreteSeries needs to be able
-		//	to determine whether or not the time bins are the same when summing
-		//	two timeSeries objects.
-		//
-		//	My solution to this is to require that any container (such as
-		//	std::vector) also have the appropriate operators defined. Boost
-		//	has definitions in boost/accumulators/numeric/functional/vector.hpp
-		//	in the namespace boost::numeric::operators.
-		////////////////////////////////////////////////////////////////////////
-		
-
-		//______________________________________________________________________
-		//!	Add another Waveform
-		/*!
-		 *
-		 */
-		 /*
-		Waveform&
-		operator+= (Waveform& rhs)
-		{
-			//this->GetTimeSeries() += rhs.GetTimeSeries();
-			
-			//	Should assert that this->GetConstTimeSeries.size() == rhs.GetConstTimeSeries().size()
-			
-			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
-			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
-				this->GetTimeSeries()[i] += rhs.GetConstTimeSeries()[i];
-			}
-
-			return *this;
-		}
-		*/
-		
-
-		//______________________________________________________________________
-		//!	Subtract another Waveform
-		/*!
-		 *
-		 */
-		 /*
-		Waveform&
-		operator-= (Waveform& rhs)
-		{
-			//this->GetTimeSeries() -= rhs.GetConstTimeSeries();
-			
-			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
-			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
-				this->GetTimeSeries()[i] -= rhs.GetConstTimeSeries()[i];
-			}
-			
-			return *this;
-		}
-		*/
-		
-
-		//______________________________________________________________________
-		//!	Multiply by another Waveform
-		/*!
-		 *
-		 */
-		/*
-		Waveform&
-		operator*= (Waveform& rhs)
-		{
-			//this->GetFreqSpectrum() *= rhs.GetConstFreqSpectrum();
-			
-			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
-			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
-				this->GetTimeSeries()[i] *= rhs.GetConstTimeSeries()[i];
-			}
-			
-			return *this;
-		}
-		*/
-		
-
-		//______________________________________________________________________
-		//!	Divide by another Waveform
-		/*!
-		 *
-		 */
-		/*
-		Waveform& operator/= (Waveform& rhs)
-		{
-			//this->GetFreqSpectrum() /= rhs.GetConstFreqSpectrum();
-
-			BOOST_ASSERT(this->GetConstTimeSeries().size() == rhs.GetConstTimeSeries().size());
-			for (std::size_t i = 0, max_size = this->GetConstTimeSeries().size(); i != max_size; ++i) {
-				this->GetTimeSeries()[i] /= rhs.GetConstTimeSeries()[i];
-			}
-
-
-			return *this;
-		}
-		 */
 		
 	};
+
+
+	template <typename ...Args1, typename ...Args2>
+	inline bool
+	operator==(const Waveform<Args1...>& lhs, const Waveform<Args2...>& rhs)
+	{
+		//	Could probably just see what the valid domain is and compare only that.
+		//	Perhaps in a later version.
+
+		//	At the very least it makes sense to check the valid domain first, because
+		//	the valid domain doesn't require a transform. 
+		//	However, that would require either this function to be a friend function or
+		//	for the validDomain_ variable to be made public.
+		return lhs.GetTimeSeries() == rhs.GetTimeSeries() && lhs.GetFreqSpectrum() == rhs.GetFreqSpectrum();
+	}
+
+	template <typename ...Args1, typename ...Args2>
+	inline bool
+	operator!=(const Waveform<Args1...>& lhs, const Waveform<Args2...>& rhs)
+	{
+		return !(lhs == rhs);
+	}
+
+
 	
 } // End of namespace PS
 

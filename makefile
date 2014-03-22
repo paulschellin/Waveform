@@ -45,10 +45,6 @@ boost_libs=-lboost_iostreams -lboost_serialization
 
 LIBS=$(gtest_libs) -lpthread -lfftw3 $(boost_libs)
 
-.PHONY: clean
-clean:
-	rm -f $(TEST_EXES)
-
 
 .PHONY: all
 all:	$(TESTS)
@@ -66,6 +62,10 @@ $(TESTS):	test_src/$$@_test.cpp $$@.hpp $(MAKEFILE)
 %.o:	%.cpp
 	$(CXX) -c $(WARNFLAGS) $(CXXFLAGS) $< -o $@
 
+
+.PHONY: clean
+clean:
+	rm -f $(TEST_EXES)
 
 
 #.PHONY: testall
