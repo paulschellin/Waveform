@@ -13,9 +13,9 @@ This library attempts to parallel the nature of waveforms in that the time domai
 
 The dependencies of the Waveform class are:
 
-	- C++11 compatible compiler
-	- boost	(optional in some cases)
-	- fftw (not necessary if you can match another library's interface to the one which Waveform was designed with)
+- C++11 compatible compiler
+- boost	(optional in some cases)
+- fftw (not necessary if you can match another library's interface to the one which Waveform was designed with)
 
 Otherwise, the Waveform class was designed to be a header-only library, so simply including the header (`#include <Waveform.hpp>`) and compiling as C++11 (adding `-std=c++11` to your makefile's compiler flags) will be sufficient, assuming FFTW3 was already being used and was properly configured. If FFTW3 was not used before, you must add `-lfftw3` to the linker flags.
 
@@ -106,13 +106,13 @@ Using typedefs to shorten the instantiation is recommended (see examples for how
 
 #### Member Functions
 
-	- GetSize()
-	- size()
-	- GetConstTimeSeries()
-	- GetConstFreqSpectrum()
-	- GetTimeSeries()
-	- GetFreqSpectrum()
-	- ValidateDomain()
+- `GetSize()`
+- `size()`
+- `GetConstTimeSeries()`
+- `GetConstFreqSpectrum()`
+- `GetTimeSeries()`
+- `GetFreqSpectrum()`
+- `ValidateDomain()`
 
 
 ### Types of Transforms
@@ -419,10 +419,10 @@ There is a (sometimes out-of-date) version of the Doxygen website available at [
 
 There are other libraries which simplify the use of transforms in signal processing, such as:
 
-	- [FFTW++](http://fftwpp.sourceforge.net/) has the goal of wrapping FFTW3 into a modern C++ interface
-	- [tspl](https://code.google.com/p/tspl/) is a set of header-only libraries for signal processing and numerical computation
-	- The Pierre Auger ["Offline Software Framework"](http://arxiv.org/abs/0707.1652) is the offline data analysis framework for the Pierre Auger Observatory, a high-energy cosmic ray detector
-	- [IT++](http://itpp.sourceforge.net/) a library of math, signal processing, and communication classes and functions
+- [FFTW++](http://fftwpp.sourceforge.net/) has the goal of wrapping FFTW3 into a modern C++ interface
+- [tspl](https://code.google.com/p/tspl/) is a set of header-only libraries for signal processing and numerical computation
+- The Pierre Auger ["Offline Software Framework"](http://arxiv.org/abs/0707.1652) is the offline data analysis framework for the Pierre Auger Observatory, a high-energy cosmic ray detector
+- [IT++](http://itpp.sourceforge.net/) a library of math, signal processing, and communication classes and functions
 	
 Of these libraries, only Auger's Offline software framework created an interface which made transforms automatic between domains, but it does so in a way that is difficult to separate from the rest of the framework. The interface it provides is not at all like any STL containers, which is something I tried to keep in mind while writing this library.
 
