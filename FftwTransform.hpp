@@ -12,14 +12,20 @@
 #define FFTWTRANSFORM_USE_INIT 1
 
 /*
- 	Note:
+	Things / Features to keep in mind:
 
-	I may be moving this class and all of those like it to be namespaced
-	into PS::Waveform.
+	 [ ] Using "Wisdom"
+	 [ ] Supporting multi-dimensional transforms
+	 [ ] Supporting multi-threading
+	 [ ] SIMD alignment (fftw_malloc and fftw_alignment_of)
+	 [ ] Making transforms have string names (fftw_sprint_plan)
+	 [ ] Split arrays of real and imaginary components
 
-	It makes sense to keep theses classes in the same namespace as Waveform,
-	similar to how boost treats extensions to serialize, accumulators, units,
-	etc.
+	 [ ] Offloading alignment and such to an allocator can make it
+	 		so that a plan could operate on a difference set of data
+			each time through the advanced interface, meaning that
+			the input and output arrays could be moved / modified
+			with a bit more effort put into the design of these classes.
 
  */
 
@@ -35,6 +41,111 @@
 
 
  */
+
+/*
+
+	Currently supported "Plans":
+
+		[ Forward Plan Name ]		[ Inverse Plan Name ]	[ Input Domain ]	[ Output Domain ]
+		fftw_plan_dft_r2c_1d		fftw_plan_dft_c2r_1d	Real 1D array		Complex 1D array
+
+
+	Eventually supported "Plans":
+		[ Forward Plan Name ]		[ Inverse Plan Name ]	[ Input Domain ]	[ Output Domain ]
+		fftw_plan_dft_1d			fftw_plan_dft_1d		Complex 1D array	Complex 1D array
+		fftw_plan_dft_2d			fftw_plan_dft_2d		Complex 2D array	Complex 2D array
+		fftw_plan_dft_3d			fftw_plan_dft_3d		Complex 3D array	Complex 3D array
+		fftw_plan_dft_r2c_2d		fftw_plan_dft_c2r_2d	Real 2D array		Complex 2D array
+		fftw_plan_dft_r2c_3d		fftw_plan_dft_c2r_3d	Real 3D array		Complex 3D array
+		fftw_plan_dft_r2c			fftw_plan_dft_c2r		Real N-D array		Complex N-D array
+	
+		fftw_plan_r2r_1d			fftw_plan_r2r_1d		Real 1D array		Real 1D array
+		fftw_plan_r2r_2d			fftw_plan_r2r_2d		Real 2D array		Real 2D array
+		fftw_plan_r2r_3d			fftw_plan_r2r_3d		Real 3D array		Real 3D array
+		fftw_plan_r2r				fftw_plan_r2r			Real N-D array		Real N-D array
+
+		Note that the r2r plans are actually unified interfaces to many different types of
+		transforms which are passed to the plan via the "fftw_r2r_kind" typed parameter.
+
+		More information here: http://www.fftw.org/doc/More-DFTs-of-Real-Data.html#More-DFTs-of-Real-Data
+
+		Useful kinds include:
+		[ fftw_r2r_kind	]
+		[ 	  name		]	[ Description ]
+		FFTW_R2HC			Real to "Halfcomplex" output -- Like dft_r2c but sometimes faster
+		FFTW_HC2R			Halfcomplex to Real -- different output than dft_c2r
+		FFTW_DHT			Discrete Hartley transform
+
+
+		
+		The r2r kinds for the various REDFT and RODFT types supported by FFTW, along with the boundary conditions at both ends of the input array (n real numbers in[j=0..n-1]), are: 
+		
+		FFTW_REDFT00		(DCT-I): even around j=0 and even around j=n-1.
+		FFTW_REDFT10		(DCT-II, “the” DCT): even around j=-0.5 and even around j=n-0.5.
+		FFTW_REDFT01		(DCT-III, “the” IDCT): even around j=0 and odd around j=n.
+		FFTW_REDFT11		(DCT-IV): even around j=-0.5 and odd around j=n-0.5.
+		FFTW_RODFT00		(DST-I): odd around j=-1 and odd around j=n.
+		FFTW_RODFT10		(DST-II): odd around j=-0.5 and odd around j=n-0.5.
+		FFTW_RODFT01		(DST-III): odd around j=-1 and even around j=n-1.
+		FFTW_RODFT11		(DST-IV): odd around j=-0.5 and even around j=n-0.5.
+ */
+
+
+/*
+
+	Normal Interface:
+
+		...	// malloc arrays aIn, aOut
+
+		fftw_plan myPlan = fftw_plan_dft_r2c_1d ( aSize
+												, aIn
+												, aOut
+												, myFlags
+												);
+
+		fftw_execute (myPlan);
+
+		...	// do something with plan
+
+		fftw_destroy_plan (myPlan);
+
+
+	Advanced Interface:
+
+		void fftw_execute_dft(
+          const fftw_plan p,
+          fftw_complex *in, fftw_complex *out);
+     
+    	void fftw_execute_split_dft(
+          const fftw_plan p,
+          double *ri, double *ii, double *ro, double *io);
+		
+		void fftw_execute_dft_r2c(
+          const fftw_plan p,
+          double *in, fftw_complex *out);
+     
+    	void fftw_execute_split_dft_r2c(
+          const fftw_plan p,
+          double *in, double *ro, double *io);
+     
+   		void fftw_execute_dft_c2r(
+          const fftw_plan p,
+          fftw_complex *in, double *out);
+     
+    	void fftw_execute_split_dft_c2r(
+          const fftw_plan p,
+          double *ri, double *ii, double *out);
+     
+    	void fftw_execute_r2r(
+          const fftw_plan p,
+          double *in, double *out);
+
+		From <http://www.fftw.org/doc/New_002darray-Execute-Functions.html>:
+			"These execute the plan to compute the corresponding transform on the input/output arrays specified by the subsequent arguments. The input/output array arguments have the same meanings as the ones passed to the guru planner routines in the preceding sections. The plan is not modified, and these routines can be called as many times as desired, or intermixed with calls to the ordinary fftw_execute."
+
+
+ */
+
 
 
 namespace Waveform {

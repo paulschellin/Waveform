@@ -14,7 +14,7 @@
 #CXX=g++-4.8
 #LD=$(CXX)
 
-TESTS=Waveform FftwTransform
+TESTS=Waveform FftwTransform IdentityTransform
 TEST_SOURCES=$(addprefix test_src/,$(addsuffix _test.cpp,$(TESTS)))
 #TEST_SOURCES=$(addprefix test_,$(addsuffix .cpp,$(TESTS)))
 
