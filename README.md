@@ -119,7 +119,7 @@ int main ()
 (the above example was taken from [FFTW's documentation website](http://www.fftw.org/doc/Complex-One_002dDimensional-DFTs.html) with some changes to format and commenting by me)
 
 
-This can be reduced to this:
+Using the Waveform library, we can write it like this:
 
 ```C++
 #include <vector>		// for our container of choice
@@ -134,11 +134,11 @@ This can be reduced to this:
 
 using namespace std;
 
-// If we only want to use a single kind of transform (in this case the same _dft_1d as we used above), then it's easiest to typedef the type to "WaveformType":
+// If we only want to use a single kind of transform (in this case the same _dft_1d as we used above, but [with normalization performed](http://www.fftw.org/doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029)), then it's easiest to typedef the type to "WaveformType":
 
 typedef Waveform < vector<double>				// The type of the real-valued array
 				, vector< complex<double> >		// The type of the complex-valued array
-				, Waveform::Transform::Fftw3_Dft_1d		// The type of transform we want to perform
+				, Waveform::Transform::Fftw3_Dft_1d_Normalized		// The type of transform we want to perform
 				> 			WaveformType;
 
 int main ()
@@ -167,8 +167,9 @@ int main ()
 	
 	ostream_iterator< complex<double> > cout_iterator (std::cout, ", ");
 
-	std::copy	( myWfm.GetConstFreqSpectrum.begin()
-				, myWfm.GetConstFreqSpectrum.end()
+	// Here's the magic! When GetConstFreqSpectrum() is called the first time, the transform is performed and won't need to be performed again until the time domain is modified!
+	std::copy	( myWfm.GetConstFreqSpectrum().begin()
+				, myWfm.GetConstFreqSpectrum().end()
 				, cout_iterator
 				);
 
@@ -182,6 +183,11 @@ int main ()
 }
 ```
 
+In this case, you might be thinking that the FFTW implementation seems simpler (or at the very least, shorter), but the complexity of an FFTW implementation increases greatly as you need more complicated signal processing, while the Waveform implementation stays the exact same! You can observe this in the following examples.
+
+#### Example #2 -- Applying a Frequency-Domain Filter to a Signal
+
+To be written!
 
 ## Documentation
 Documentation for Waveform is of the form used by Doxygen and there is a Doxyfile located in doc/. Running "doxygen Doxyfile" will generate html documentation which is easily viewed by opening doc/html/index.html in a web browser.
