@@ -418,9 +418,13 @@ There is a (sometimes out-of-date) version of the Doxygen website available at [
 ## Why Use Waveform?
 
 There are other libraries which simplify the use of transforms in signal processing, such as:
-	- [FFTW++](http://fftwpp.sourceforge.net/)
-	- [tspl](https://code.google.com/p/tspl/)
-	- The Pierre Auger ["Offline Software Framework"](http://arxiv.org/abs/0707.1652)
+
+	- [FFTW++](http://fftwpp.sourceforge.net/) has the goal of wrapping FFTW3 into a modern C++ interface
+	- [tspl](https://code.google.com/p/tspl/) is a set of header-only libraries for signal processing and numerical computation
+	- The Pierre Auger ["Offline Software Framework"](http://arxiv.org/abs/0707.1652) is the offline data analysis framework for the Pierre Auger Observatory, a high-energy cosmic ray detector
+	- [IT++](http://itpp.sourceforge.net/) a library of math, signal processing, and communication classes and functions
+	
+Of these libraries, only Auger's Offline software framework created an interface which made transforms automatic between domains, but it does so in a way that is difficult to separate from the rest of the framework. The interface it provides is not at all like any STL containers, which is something I tried to keep in mind while writing this library.
 
 ## Notes on Development
 
@@ -429,4 +433,5 @@ The features of this library are still in flux due to the decision to generalize
 It is likely that the compound assignment operators and other arithmetic operators will be deprecated because they no longer have a straightforward, obvious meaning when dealing with generalized transforms.
 
 The functionality can probably be better provided by explicit friend functions which accept one Waveform and one other container as arguments. The details of these friend functions are not trivial and will take time to complete.
-	
+
+If you have any ideas, comments, criticism, or feature requests, please contact me via [email](paulschellin@gmail.com) or create an "Issue" on github and I'll work with you to improve this library.
