@@ -168,8 +168,6 @@ namespace PS {
 		typedef typename FreqContainer::const_iterator	FreqConstIterator;
 		
 		
-		
-	  private:
 
 		//!
 		/*!
@@ -179,6 +177,8 @@ namespace PS {
 		 */
 		enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};
 		
+	  private:
+
 		//!	Indicates the valid domain array(s)
 		DomainSpecifier				validDomain_;
 

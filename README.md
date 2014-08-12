@@ -68,6 +68,57 @@ make clean FftwTransform
 
 If you have used FFTW before, you'll find using Waveform is much easier!
 
+### Creating a Waveform instance
+
+The Waveform library is provided as a class templates, so you'll need to know what parameters are used for instantiation:
+
+```C++
+template < typename TimeContainer
+		 , typename FreqContainer
+		 , typename TransformT
+		 >
+```
+
+`TimeContainer` is usually `std::vector<double>`, `FreqContainer` normally `std::vector<std::complex<double>>`, and `TransformT` can be one of a number of transforms, such as `Fftw3_Dft_1d`, `Fftw3_Dft_1d_Normalized`, `IdentityTransform`, and any other transforms I add in the future -- or ones that you write yourself (for more info on how to do that, look at the `PlaceholderTransformClass` definition in `Waveform.hpp`).
+
+So a complete instantiation would be:
+
+```C++
+template < vector<double>
+		 , vector<complex<double> >
+		 , Fftw3_Dft_1d_Normalized
+		 > myWfm;
+```
+
+Using typedefs to shorten the instantiation is recommended (see examples for how this is done).
+
+### Using Waveform Functions
+
+#### Constructors
+
+| Constructor Name | Constructor Call | Parameter Names | Description |
+| ---------------: | :--------------- | --------------- | :---------- |
+| Default constructor			| Waveform ();							| <none> | The default constructor is disallowed |
+| Fill constructor				| Waveform (size_t n);					| x is the size of the time domain array | Fill constructor |
+| Copy constructor				| Waveform (const Waveform& x);			| x is the Waveform to copy | Copy constructor |
+| Time domain copy constructor	| Waveform (const TimeContainer& x);	| x is the time domain container to copy | Time domain copy constructor |
+| Freq domain copy constructor	| Waveform (const FreqContainer& x);	| x is the freq domain container to copy | Freq domain copy constructor |
+
+#### Member Functions
+
+	- GetSize()
+	- size()
+	- GetConstTimeSeries()
+	- GetConstFreqSpectrum()
+	- GetTimeSeries()
+	- GetFreqSpectrum()
+	- ValidateDomain()
+
+
+### Types of Transforms
+
+To be written.
+
 ### Examples
 Some examples to help show how this library can be used.
 
@@ -187,7 +238,174 @@ In this case, you might be thinking that the FFTW implementation seems simpler (
 
 #### Example #2 -- Applying a Frequency-Domain Filter to a Signal
 
-To be written!
+There's a lot of code to this, so the FFTW and Waveform implementations will share some code:
+```C++
+#include <iostream>
+#include <string>
+#include <iterator>
+#include <vector>
+#include <complex>
+
+using namespace std;
+
+template <typename T>
+vector<T>
+parse_dat_file (const string fileName)
+{
+	ifstream ifs (fileName.c_str());
+	assert(ifs.good());
+
+	vector<T> result { istream_iterator<T>(ifs)
+						, istream_iterator<T>() };
+
+	return result;
+}
+
+```
+
+FFTW Implementation:
+
+```C++
+#include <fftw3.h>
+#include <vector>
+#include <complex>
+
+int main ()
+{
+	// Create the input and output array pointers
+	fftw_complex *in;
+	fftw_complex *out;
+
+	// Create the plan
+	fftw_plan p;
+
+	vector<double> mySignal = parse_dat_file("signal_file.dat");
+
+	vector<complex<double> > filter0 = parse_dat_file< complex<double> >("filter0_file.dat");
+	vector<complex<double> > filter1 = parse_dat_file< complex<double> >("filter1_file.dat");
+
+	// Get the size of the signal to dynamically allocate the arrays
+	size_t N = mySignal.size();
+
+	// Dynamically allocate the input and output arrays
+	in = (double*) fftw_malloc(sizeof(double) * N);
+	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+	
+
+	// Create the plan
+	fftw_plan forward_plan = fftw_plan_dft_r2c_1d(N, in, out, FFTW_ESTIMATE);
+	fftw_plan inverse_plan = fftw_plan_dft_c2r_1d(N, out, in, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+
+
+	// Fill input array
+	for (size_t i = 0; i < mySignal.size(); ++i)
+		in[i] = mySignal.at(i);
+
+
+	std::cout << "The original signal waveform:" << std::endl;
+	std::copy ( in
+			  , in + N
+		      , std::ostream_iterator< complex<double> >(std::cout, ", ");
+
+
+	// Explicitly perform the transform
+	fftw_execute(forward_plan);
+
+	// Apply the first filter
+	for (size_t i = 0; i < filter0.size(); ++i)
+		out[i] *= filter0.at(i);
+
+	// Explicitly perform the transform
+	fftw_execute(inverse_plan);
+
+	std::cout << "After applying filter0:" << std::endl;
+	std::copy ( in
+			  , in + N
+		      , std::ostream_iterator< complex<double> >(std::cout, ", ");
+
+	// Explicitly perform the transform
+	fftw_execute(forward_plan);
+
+	// Apply the second filter
+	for (size_t i = 0; i < filter1.size(); ++i)
+		out[i] *= filter1.at(i);
+
+
+	// Explicitly perform the transform
+	fftw_execute(inverse_plan);
+
+	std::cout << "After applying filter1:" << std::endl;
+	std::copy ( in
+			  , in + N
+		      , std::ostream_iterator< complex<double> >(std::cout, ", ");
+			  
+
+	// Free the memory used by the dynamically allocated arrays and the plan.
+	fftw_destroy_plan(forward_plan);
+	fftw_destroy_plan(inverse_plan);
+	fftw_free(in);
+	fftw_free(out);
+}
+
+```
+
+Waveform Implementation:
+
+```C++
+#include <vector>		// for our container of choice
+#include <complex>		// for our complex type of choice
+#include <string>
+#include <iostream>		// for std::cout
+#include <iterator>		// for std::ostream_iterator
+#include <algorithm>	// for std::copy
+
+#include <Waveform/Waveform.hpp>		// the standard Waveform header file
+#include <Waveform/FftwTransform.hpp>	// the FFTW3 transform header file
+
+typedef Waveform < vector<double>				// The type of the real-valued array
+				, vector< complex<double> >		// The type of the complex-valued array
+				, Waveform::Transform::Fftw3_Dft_1d_Normalized		// The type of transform we want to perform
+				> 			WaveformType;
+
+
+int main ()
+{
+	// Construct a Waveform instance from a vector filled by a file
+	WaveformType mySignal ( parse_dat_file<double>("signal_file.dat") );
+
+	// Create two filters, read in from files
+	auto filter0 = parse_dat_file< complex<double> >("filter0_file.dat");
+	auto filter1 = parse_dat_file< complex<double> >("filter1_file.dat");
+
+	std::cout << "The original signal waveform:" << std::endl;
+	std::copy ( mySignal.GetConstTimeSeries().begin()
+				, mySignal.GetConstTimeSeries().end()
+				, std::ostream_iterator< complex<double> >(std::cout, ", ");
+
+	
+	// Apply the first filter
+	for (size_t i = 0; i < mySignal.GetConstFreqSpectrum().size(); ++i)
+		mySignal.GetFreqSpectrum().at(i) *= filter0.at(i);
+
+	// Print out the resulting signal waveform in the time domain
+	std::cout << "After applying filter0:" << std::endl;
+	std::copy ( mySignal.GetConstTimeSeries().begin()
+				, mySignal.GetConstTimeSeries().end()
+				, std::ostream_iterator< complex<double> >(std::cout, ", ");
+
+
+	// Apply the second filter
+	for (size_t i = 0; i < mySignal.GetConstFreqSpectrum().size(); ++i)
+		mySignal.GetFreqSpectrum().at(i) *= filter1.at(i);
+
+
+	// Print out the resulting signal waveform in the time domain
+	std::cout << "After applying filter1:" << std::endl;
+	std::copy ( mySignal.GetConstTimeSeries().begin()
+				, mySignal.GetConstTimeSeries().end()
+				, std::ostream_iterator< complex<double> >(std::cout, ", ");
+}
+```
 
 ## Documentation
 Documentation for Waveform is of the form used by Doxygen and there is a Doxyfile located in doc/. Running "doxygen Doxyfile" will generate html documentation which is easily viewed by opening doc/html/index.html in a web browser.
@@ -196,6 +414,13 @@ The Doxygen website created leaves something to be desired, but other fixes are 
 
 There is a (sometimes out-of-date) version of the Doxygen website available at [http://paulschellin.github.io/Waveform/](http://paulschellin.github.io/Waveform/).
 
+
+## Why Use Waveform?
+
+There are other libraries which simplify the use of transforms in signal processing, such as:
+	- [FFTW++](http://fftwpp.sourceforge.net/)
+	- [tspl](https://code.google.com/p/tspl/)
+	- The Pierre Auger ["Offline Software Framework"](http://arxiv.org/abs/0707.1652)
 
 ## Notes on Development
 
