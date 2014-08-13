@@ -184,7 +184,7 @@ It's simple to define your own transform if you want/need to.
 
 All you need is to define a class with two public constructors, a destructor, and two member functions: `void exec_transform (void)` and `void exec_inverse_transform (void)`.
 
-Here's an example for a transform that just performs log10() on the elements:
+Here's an example for a transform that just performs `log10()` on the elements for the forwrd transform, and `pow(10, x)` for the inverse:
 
 ```C++
 namespace Waveform {
@@ -392,7 +392,6 @@ parse_dat_file (const string fileName)
 
 	return result;
 }
-
 ```
 
 FFTW Implementation:
@@ -566,4 +565,25 @@ It is likely that the compound assignment operators and other arithmetic operato
 
 The functionality can probably be better provided by explicit friend functions which accept one Waveform and one other container as arguments. The details of these friend functions are not trivial and will take time to complete.
 
-If you have any ideas, comments, criticism, or feature requests, please contact me via [email](paulschellin@gmail.com) or create an "Issue" on github and I'll work with you to improve this library.
+### Speak Up!
+If you have any ideas, comments, criticism, or feature requests, please contact me via [email](paulschellin@gmail.com) or create an ["Issue"](https://github.com/paulschellin/Waveform/issues) on github and I'll work with you to improve this library.
+
+### Considerations for Future Features
+
+#### Lazy Evaluation and Optimization Through [Expression Templates](http://en.wikipedia.org/wiki/Expression_templates)
+
+Make use of expression templates similar to the [Blitz++ library](http://blitz.sourceforge.net/) and [Armadillo](http://arma.sourceforge.net/).
+
+This could be used to minimize the number of transforms that occur when manipulating both domains in a loop, for example.
+
+#### Better Guarded Iterator Support
+
+This was a feature at first, but earlier rapid development of the rest of the library made it difficult to maintain, so it was removed.
+
+The iterator class needs to be able to notify the Waveform class when it has been modified, and this can be done by having separate Input and Output iterator types which are chosen at compile time using argument-dependent name lookup.
+
+#### Compound Assignment Operators
+
+These were also removed due to uncertainty as to how to indicate whether or not an operation would be a linear transform or not.
+
+Perhaps if Transform classes have transform_type typedefs added to them it might be possible to implement the compound assignment operators in a sane fashion.
