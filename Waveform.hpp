@@ -40,15 +40,7 @@
 
 //! Namespace PS is the namespace used for classes, etc. created by the author (Paul Schellin)
 namespace PS {
-	using std::size_t;
-	
-	
-	using boost::begin;		//	The begin() free function (not member function)
-	using boost::end;		//	The end() free function (not member function)
-
-	
-	
-	
+		
 	//!	PlaceholderTransformClass: Defines the minimum interface for a transform class.
 	/*!
 	 *	This class outlines the interface needed by some transform class.
@@ -211,7 +203,7 @@ namespace PS {
 	  public:
 		
 		//! Fill constructor
-		Waveform(const size_t count)
+		Waveform(const std::size_t count)
 			: validDomain_(EitherDomain)
 			, timeSeries_(count)
 			, freqSpectrum_(count)
@@ -267,13 +259,13 @@ namespace PS {
 		 *	STL-compliant (though this class is difficult to
 		 *	design 100% in line with the STL idioms)>
 		 */
-		size_t
+		std::size_t
 		GetSize	(void) //const
 		{ return GetConstTimeSeries().size(); }
 	
 
 		//!	Returns the size of the time domain container
-		size_t
+		std::size_t
 		size (void) //const
 		{ return GetConstTimeSeries().size(); }
 		
