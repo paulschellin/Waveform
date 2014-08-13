@@ -45,32 +45,7 @@ NOTE: Google recommends just placing the test framework directory within the dir
 
 IMPORTANT: Not all tests will pass necessarily, I've put explicit failures into the test files to remind myself and users that there are still features which I must implement.
 
-There are a number of tests, each of which can be run by typing:
-
-#### Test Waveform
-This tests the basic functionality of the library.
-
-```Shell
-make clean Waveform
-./test_bin/Waveform_test
-```
-
-#### Test IdentityTransform
-Test the most basic transform -- the identity transform.
-```Shell
-make clean IdentityTransform
-./test_bin/IdentityTransform_test
-```
-
-#### Test FftwTransform
-
-NOTE: In order to run the FFTW tests, you must have the FFTW3 library installed. I highly recommend using your package manager (such as apt-get on Debian/Ubuntu, pacman on Arch, yum on Fedora, Homebrew on Mac OS X, etc.) to install it instead of installing it manually because your package manager will set up the linking and include directories automatically and appropriately.
-
-```Shell
-make clean FftwTransform
-./test_bin/FftwTransform_test
-```
-
+There are a number of tests, find out more info about them [here](https://github.com/paulschellin/Waveform/blob/master/testing_info.md)
 
 ## How To Use
 
@@ -132,7 +107,7 @@ Transform objects are what make the Waveform containers do the mathematical tran
 - `Fftw3_Dft_1d` -- based on fftw_plan_dft_r2c_1d and _c2r_1d
 - `Fftw3_Dft_1d_Normalized` -- like Fftw3_Dft_1d but [normalized](http://www.fftw.org/doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029)
 
-[Detailed  info on transforms can be found here](https://github.com/paulschellin/Waveform/blob/master/transforms_info.md)
+#### [Detailed info on transforms can be found here](https://github.com/paulschellin/Waveform/blob/master/transforms_info.md)
 
 
 ### Examples
