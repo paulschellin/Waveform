@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['faketransformclass',['FakeTransformClass',['../classPS_1_1FakeTransformClass.html',1,'PS']]]
+  ['placeholdertransformclass',['PlaceholderTransformClass',['../classPS_1_1PlaceholderTransformClass.html',1,'PS']]]
 ];

@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['getconstfreqspectrum',['GetConstFreqSpectrum',['../classPS_1_1Waveform.html#a5d1b9c619adffc3ae882dcfa7059588e',1,'PS::Waveform']]],
-  ['getconsttimeseries',['GetConstTimeSeries',['../classPS_1_1Waveform.html#afc578cdba874e25c3b91d203a3820af9',1,'PS::Waveform']]],
-  ['getfreqspectrum',['GetFreqSpectrum',['../classPS_1_1Waveform.html#af7c881386e0ef4b148672a34fb76f774',1,'PS::Waveform']]],
-  ['getsize',['GetSize',['../classPS_1_1Waveform.html#ac317c133065b7e18d4cb52504aa6309e',1,'PS::Waveform']]],
-  ['gettimeseries',['GetTimeSeries',['../classPS_1_1Waveform.html#a7a4f1bacf6211dae19efb4747c007983',1,'PS::Waveform']]]
+  ['placeholdertransformclass',['PlaceholderTransformClass',['../classPS_1_1PlaceholderTransformClass.html',1,'PS']]],
+  ['placeholdertransformclass',['PlaceholderTransformClass',['../classPS_1_1PlaceholderTransformClass.html#ad878dcc59b13e618a7bb9b812f1b2783',1,'PS::PlaceholderTransformClass::PlaceholderTransformClass(Iterator1 first1, Iterator1 last1, Iterator2 first2)'],['../classPS_1_1PlaceholderTransformClass.html#a8a567dffe4ec806e786478c2f0f22a81',1,'PS::PlaceholderTransformClass::PlaceholderTransformClass(RandomAccessRange1 &amp;range1, RandomAccessRange2 &amp;range2)']]],
+  ['ps',['PS',['../namespacePS.html',1,'PS'],['../group__PS.html',1,'(Global Namespace)']]]
 ];

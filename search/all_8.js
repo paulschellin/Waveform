@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['timealloct',['TimeAllocT',['../classPS_1_1Waveform.html#ad24d806b07303e9aa5a2168a396f96fe',1,'PS::Waveform']]],
-  ['timeconstiterator',['TimeConstIterator',['../classPS_1_1Waveform.html#a3e892e44ee65a67899654b82f71536cf',1,'PS::Waveform']]],
-  ['timeiterator',['TimeIterator',['../classPS_1_1Waveform.html#ad597a281d27f0a14a7bbedd1d39e8c02',1,'PS::Waveform']]],
-  ['timet',['TimeT',['../classPS_1_1Waveform.html#af42fd7401f467f15f5299cf48f63b651',1,'PS::Waveform']]]
+  ['waveform',['Waveform',['../classPS_1_1Waveform.html',1,'PS']]],
+  ['waveform',['Waveform',['../classPS_1_1Waveform.html#ac075d1a0cc65b6605b1f713d0ef736ff',1,'PS::Waveform::Waveform(const std::size_t count)'],['../classPS_1_1Waveform.html#abbbc68c0be529cc982e46e4a480d7d53',1,'PS::Waveform::Waveform(const Waveform &amp;toCopy)'],['../classPS_1_1Waveform.html#ad9327af152d7242de328967fa65abe66',1,'PS::Waveform::Waveform(const TimeContainer &amp;toCopy)'],['../classPS_1_1Waveform.html#ad5599e9632b91d8e14582ea41faa99ea',1,'PS::Waveform::Waveform(const FreqContainer &amp;toCopy)'],['../classPS_1_1Waveform.html#a36a5441b595ae915b36dd22b89e6300b',1,'PS::Waveform::Waveform(Waveform &amp;&amp;rhs)']]]
 ];

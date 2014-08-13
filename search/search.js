@@ -7,12 +7,13 @@
 
 var indexSectionsWithContent =
 {
-  0: "bcefgopstvw~",
-  1: "fw",
+  0: "efgopstvw~",
+  1: "pw",
   2: "p",
-  3: "bcefgosvw~",
+  3: "egopsvw~",
   4: "ftv",
-  5: "p"
+  5: "s",
+  6: "p"
 };
 
 var indexSectionNames =
@@ -22,7 +23,8 @@ var indexSectionNames =
   2: "namespaces",
   3: "functions",
   4: "typedefs",
-  5: "groups"
+  5: "related",
+  6: "groups"
 };
 
 function convertToId(search)

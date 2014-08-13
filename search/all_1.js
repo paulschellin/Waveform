@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['cbeginfreq',['cbeginFreq',['../classPS_1_1Waveform.html#a724c901e520935a17e2949c5d988313d',1,'PS::Waveform']]],
-  ['cbegintime',['cbeginTime',['../classPS_1_1Waveform.html#a9386935827aff2a83ab3d7bee582f2ea',1,'PS::Waveform']]],
-  ['cendfreq',['cendFreq',['../classPS_1_1Waveform.html#ab50a9ad7bfa3a8fa38b9894033032d3b',1,'PS::Waveform']]],
-  ['cendtime',['cendTime',['../classPS_1_1Waveform.html#a312e365fe6069732663272631da983c1',1,'PS::Waveform']]]
+  ['freqalloct',['FreqAllocT',['../classPS_1_1Waveform.html#a161c7152f413a98ea422b4cddc35e53a',1,'PS::Waveform']]],
+  ['freqconstiterator',['FreqConstIterator',['../classPS_1_1Waveform.html#a39f2e305849e80c6f8ec3890c351538c',1,'PS::Waveform']]],
+  ['freqiterator',['FreqIterator',['../classPS_1_1Waveform.html#aa1525288dfcbcd2f8a685e12549ec262',1,'PS::Waveform']]],
+  ['freqt',['FreqT',['../classPS_1_1Waveform.html#aca087b635e1693671907f0ac717a1e9d',1,'PS::Waveform']]]
 ];
