@@ -134,7 +134,7 @@ Transform objects are what make the Waveform containers do the mathematical tran
 
 #### Eventual Support
 
-For FFTW "Plans":
+##### FFTW "Plans"
 
 | Transform Name | Forward Plan Name | Inverse Plan Name | First Domain | Second Domain |
 | -------------- | ----------------- | ----------------- | ------------ | ------------- |
@@ -170,6 +170,81 @@ Useful kinds include:
 | FFTW_RODFT11 | (DST-IV): odd around j=-0.5 and even around j=n-0.5. |
 
 The r2r kinds for the various REDFT and RODFT types supported by FFTW, along with the boundary conditions at both ends of the input array (n real numbers in[j=0..n-1]), are: 
+
+##### Other Common Transforms
+
+- Wavelet transform
+- Hilbert transform
+- Laplace transform 
+
+
+#### User-Defined Transforms
+
+It's simple to define your own transform if you want/need to.
+
+All you need is to define a class with two public constructors, a destructor, and two member functions: `void exec_transform (void)` and `void exec_inverse_transform (void)`.
+
+Here's an example for a transform that just performs log10() on the elements:
+
+```C++
+namespace Waveform {
+namespace Transform {
+
+template <typename Iter>
+class Log10Transform {
+  private:
+
+	typedef typename Iter::value_type T;
+
+	Iter linear_begin_;
+	Iter linear_end_;
+	Iter log10_begin_;
+	Iter log10_end_;
+
+  public:
+	
+	template <typename Iterator1, typename Iterator2>
+	Log10Transform (Iterator1 first1, Iterator1 last1, Iterator2 first2)
+		: linear_begin_(first1)
+		, linear_end_ (last1)
+		, log10_begin_ (first2)
+		, log10_end_ (log10_begin_ + std::distance(linear_begin_, linear_end_))
+	{
+	}
+
+	template <typename RandomAccessRange1, typename RandomAccessRange2>
+	Log10Transform (RandomAccessRange1& range1, RandomAccessRange2& range2)
+		: linear_begin_( boost::begin(range1))
+		, linear_end_ ( boost::end(range1))
+		, log10_begin_ ( boost::begin(range2))
+		, log10_end_ ( boost::end(range2))
+	{
+	}
+
+	~Log10Transform (void)
+	{
+	}
+
+	void exec_transform (void)
+	{
+		std::transform (linear_begin_, linear_end_, log10_begin_,
+			[](T x){ log10(x); }
+		);
+	}
+
+	void exec_inverse_transform (void)
+	{
+		boost::transform (log10_begin_, log10_end_, linear_begin_,
+			[](T x){ pow(T(10.),x); }
+		);
+	}
+
+};
+
+}
+}
+```
+
 
 ### Examples
 Some examples to help show how this library can be used.
