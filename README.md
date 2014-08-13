@@ -132,6 +132,10 @@ Transform objects are what make the Waveform containers do the mathematical tran
 - `Fftw3_Dft_1d` -- based on fftw_plan_dft_r2c_1d and _c2r_1d
 - `Fftw3_Dft_1d_Normalized` -- like Fftw3_Dft_1d but [normalized](http://www.fftw.org/doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029)
 
+More info on transforms can be found [here](https://github.com/paulschellin/Waveform/blob/master/transforms_info.md)
+
+<---!
+
 #### Eventual Support
 
 ##### FFTW "Plans"
@@ -245,6 +249,7 @@ class Log10Transform {
 }
 ```
 
+-->
 
 ### Examples
 Some examples to help show how this library can be used.
