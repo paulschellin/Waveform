@@ -232,6 +232,7 @@ int main ()
 
 In this case, you might be thinking that the FFTW implementation seems simpler (or at the very least, shorter), but the complexity of an FFTW implementation increases greatly as you need more complicated signal processing, while the Waveform implementation stays the exact same! You can observe this in the following examples.
 
+<!---
 #### Example #2 -- Applying a Frequency-Domain Filter to a Signal
 
 There's a lot of code to this, so the FFTW and Waveform implementations will share some code:
@@ -401,8 +402,8 @@ int main ()
 				, std::ostream_iterator< complex<double> >(std::cout, ", ");
 }
 ```
-
-### [Info on More Examples Found Here](https://github.com/paulschellin/Waveform/blob/master/examples/example.md)
+-->
+### [More Examples Found Here](https://github.com/paulschellin/Waveform/blob/master/examples/example.md)
 
 ## Documentation
 Documentation for Waveform is of the form used by Doxygen and there is a Doxyfile located in doc/. Running "doxygen Doxyfile" will generate html documentation which is easily viewed by opening doc/html/index.html in a web browser.
