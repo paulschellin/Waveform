@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['getconstfreqspectrum',['GetConstFreqSpectrum',['../classPS_1_1Waveform.html#a5d1b9c619adffc3ae882dcfa7059588e',1,'PS::Waveform']]],
-  ['getconsttimeseries',['GetConstTimeSeries',['../classPS_1_1Waveform.html#afc578cdba874e25c3b91d203a3820af9',1,'PS::Waveform']]],
-  ['getfreqspectrum',['GetFreqSpectrum',['../classPS_1_1Waveform.html#af7c881386e0ef4b148672a34fb76f774',1,'PS::Waveform']]],
-  ['getsize',['GetSize',['../classPS_1_1Waveform.html#a20159d1bca7a43113522f0e6e734e99d',1,'PS::Waveform']]],
-  ['gettimeseries',['GetTimeSeries',['../classPS_1_1Waveform.html#a7a4f1bacf6211dae19efb4747c007983',1,'PS::Waveform']]]
+  ['fftw3_5fdft_5f1d',['Fftw3_Dft_1d',['../classWaveform_1_1Transform_1_1Fftw3__Dft__1d.html#a5713e249952670e92c5aba74b2432489',1,'Waveform::Transform::Fftw3_Dft_1d::Fftw3_Dft_1d(Iterator1 first1, Iterator1 last1, Iterator2 first2)'],['../classWaveform_1_1Transform_1_1Fftw3__Dft__1d.html#a81f2369364cef488eb6d88711fd62812',1,'Waveform::Transform::Fftw3_Dft_1d::Fftw3_Dft_1d(RandomAccessRange1 &amp;range1, RandomAccessRange2 &amp;range2)']]],
+  ['fftw3_5fdft_5f1d_5fnormalized',['Fftw3_Dft_1d_Normalized',['../classWaveform_1_1Transform_1_1Fftw3__Dft__1d__Normalized.html#a85ce628b8be073ee27c91af6908932cf',1,'Waveform::Transform::Fftw3_Dft_1d_Normalized::Fftw3_Dft_1d_Normalized(Iterator1 first1, Iterator1 last1, Iterator2 first2)'],['../classWaveform_1_1Transform_1_1Fftw3__Dft__1d__Normalized.html#aea1fd0f069b6186e8a1ed13b611ff6cc',1,'Waveform::Transform::Fftw3_Dft_1d_Normalized::Fftw3_Dft_1d_Normalized(RandomAccessRange1 &amp;range1, RandomAccessRange2 &amp;range2)']]]
 ];

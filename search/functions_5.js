@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['validatedomain',['ValidateDomain',['../classPS_1_1Waveform.html#ab8044666f1fd4de46797ed4ba9c75c42',1,'PS::Waveform']]]
+  ['size',['size',['../classPS_1_1Waveform.html#a5b2d28d275dd85d91c2e34a1e55156b7',1,'PS::Waveform']]]
 ];

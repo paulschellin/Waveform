@@ -7,10 +7,10 @@
 
 var indexSectionsWithContent =
 {
-  0: "efgopstvw~",
-  1: "pw",
+  0: "efgiopstvw~",
+  1: "fipw",
   2: "p",
-  3: "egopsvw~",
+  3: "efgopsvw~",
   4: "ftv",
   5: "s",
   6: "p"
