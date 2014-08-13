@@ -427,6 +427,8 @@ int main ()
 }
 ```
 
+### [Info on More Examples Found Here](https://github.com/paulschellin/Waveform/blob/master/examples/example.md)
+
 ## Documentation
 Documentation for Waveform is of the form used by Doxygen and there is a Doxyfile located in doc/. Running "doxygen Doxyfile" will generate html documentation which is easily viewed by opening doc/html/index.html in a web browser.
 
