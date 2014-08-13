@@ -3,7 +3,7 @@ Written by Paul Schellin at the Ohio State University, 2012 to 2014.
 
 Waveform is a C++ header-only library which represents both the time and the frequency domains of a waveform/signal as a single object, transforming using FFTW automatically when needed.
 
-The Waveform class provides a safe, intuitive interface to allow a signal (or trace, or waveform) to be described in either the time domain or in the frequency domain, and manipulated in either domain without explicitly needing to convert the datatype from one domain to another.
+The Waveform class provides a safe, intuitive interface to allow a signal to be described in either the time domain or in the frequency domain and then manipulated in any domain without explicitly needing to transform from one domain to another.
 
 This library attempts to parallel the nature of waveforms in that the time domain, frequency domain, S domain, etc. are simply different representations of a singular physical entity.
 
@@ -13,9 +13,11 @@ This library attempts to parallel the nature of waveforms in that the time domai
 
 The dependencies of the Waveform class are:
 
-- C++11 compatible compiler
-- boost	(optional in some cases)
-- fftw (not necessary if you can match another library's interface to the one which Waveform was designed with)
+- [C++11 compatible](http://cpprocks.com/c11-compiler-support-shootout-visual-studio-gcc-clang-intel/) compiler
+- [boost](http://www.boost.org/) (optional in some cases)
+- [fftw](http://www.fftw.org/) (not necessary if you can match another library's interface to the one which Waveform was designed with)
+
+I highly recommend using your system's package manager to install your compiler, the boost libraries, and fftw. The package manager will handle all of the annoying path variables for including headers and for linking libraries. Plus, it's much easier to update packages.
 
 Otherwise, the Waveform class was designed to be a header-only library, so simply including the header (`#include <Waveform.hpp>`) and compiling as C++11 (adding `-std=c++11` to your makefile's compiler flags) will be sufficient, assuming FFTW3 was already being used and was properly configured. If FFTW3 was not used before, you must add `-lfftw3` to the linker flags.
 
@@ -98,11 +100,11 @@ Using typedefs to shorten the instantiation is recommended (see examples for how
 
 | Constructor Name | Constructor Call | Parameter Names | Description |
 | ---------------: | :--------------- | --------------- | :---------- |
-| Default constructor			| Waveform ();							| <none> | The default constructor is disallowed |
-| Fill constructor				| Waveform (size_t n);					| x is the size of the time domain array | Fill constructor |
-| Copy constructor				| Waveform (const Waveform& x);			| x is the Waveform to copy | Copy constructor |
-| Time domain copy constructor	| Waveform (const TimeContainer& x);	| x is the time domain container to copy | Time domain copy constructor |
-| Freq domain copy constructor	| Waveform (const FreqContainer& x);	| x is the freq domain container to copy | Freq domain copy constructor |
+| Default constructor			| `Waveform ()`;							| <none> | The default constructor is disallowed |
+| Fill constructor				| `Waveform (size_t n)`;					| `x` is the size of the time domain array | Fill constructor |
+| Copy constructor				| `Waveform (const Waveform& x)`;			| `x` is the Waveform to copy | Copy constructor |
+| Time domain copy constructor	| `Waveform (const TimeContainer& x)`;	| `x` is the time domain container to copy | Time domain copy constructor |
+| Freq domain copy constructor	| `Waveform (const FreqContainer& x)`;	| `x` is the freq domain container to copy | Freq domain copy constructor |
 
 #### Member Functions
 
@@ -114,10 +116,11 @@ Using typedefs to shorten the instantiation is recommended (see examples for how
 - `GetFreqSpectrum()`
 - `ValidateDomain()`
 
-
+<!---
 ### Types of Transforms
 
 To be written.
+-->
 
 ### Examples
 Some examples to help show how this library can be used.
@@ -185,7 +188,12 @@ Using the Waveform library, we can write it like this:
 
 using namespace std;
 
-// If we only want to use a single kind of transform (in this case the same _dft_1d as we used above, but [with normalization performed](http://www.fftw.org/doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029)), then it's easiest to typedef the type to "WaveformType":
+/*
+	If we only want to use a single kind of transform (in this case the
+	same _dft_1d as we used above but with normalization performed (see
+	http://www.fftw.org/doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029),
+	then it's easiest to typedef the type to "WaveformType":
+ */
 
 typedef Waveform < vector<double>				// The type of the real-valued array
 				, vector< complex<double> >		// The type of the complex-valued array
