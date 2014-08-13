@@ -587,3 +587,11 @@ The iterator class needs to be able to notify the Waveform class when it has bee
 These were also removed due to uncertainty as to how to indicate whether or not an operation would be a linear transform or not.
 
 Perhaps if Transform classes have transform_type typedefs added to them it might be possible to implement the compound assignment operators in a sane fashion.
+
+#### Partially Invalidated Domains
+
+In some cases, only a small section of one domain may be modified. As the library is currently written, that small section invalidates the other domain entirely, requiring the whole thing to be recomputed.
+
+Some transforms, however, do not require transforming the whole thing if only a small section is modified. And if the transforms are particularly expensive then there is sufficient motivation to try to only invalidate the associated section in the other domain, not the whole domain.
+
+Details of the implementation of this feature will take a while to work out.
