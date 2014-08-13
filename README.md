@@ -13,17 +13,23 @@ This library attempts to parallel the nature of waveforms in that the time domai
 
 The dependencies of the Waveform class are:
 
-- [C++11 compatible](http://cpprocks.com/c11-compiler-support-shootout-visual-studio-gcc-clang-intel/) compiler
+- a [C++11 compatible](http://cpprocks.com/c11-compiler-support-shootout-visual-studio-gcc-clang-intel/) compiler
 - [boost](http://www.boost.org/) (optional in some cases)
 - [fftw](http://www.fftw.org/) (not necessary if you can match another library's interface to the one which Waveform was designed with)
 
 I highly recommend using your system's package manager to install your compiler, the boost libraries, and fftw. The package manager will handle all of the annoying path variables for including headers and for linking libraries. Plus, it's much easier to update packages.
 
-Otherwise, the Waveform class was designed to be a header-only library, so simply including the header (`#include <Waveform.hpp>`) and compiling as C++11 (adding `-std=c++11` to your makefile's compiler flags) will be sufficient, assuming FFTW3 was already being used and was properly configured. If FFTW3 was not used before, you must add `-lfftw3` to the linker flags.
+Otherwise, the Waveform class was designed to be a header-only library, so simply including the header (`#include <Waveform.hpp>`) and compiling with C++11 support (you can do this by adding `-std=c++11` to your compiler's flags) will be sufficient, assuming FFTW3 was already being used and was properly configured. If FFTW3 was not used before, you must add `-lfftw3` to the linker flags.
 
 
 ### Download the Waveform library
-To download this library from github, simply type `git clone https://github.com/paulschellin/Waveform.git` in a terminal to clone the library to the current directory, or click the "Download ZIP" button to the right to have your browser take care of the download, then unzip it where you need it.
+To download this library from github, simply type
+```Shell
+git clone https://github.com/paulschellin/Waveform.git
+```
+in a terminal to clone the library to the current directory.
+
+Or click the "Download ZIP" button to the right to have your browser take care of the download, then unzip it where you need it.
 
 
 ### Verify "Installation"
@@ -35,7 +41,7 @@ The actual FFTW wrapper can be found in FftwTransform.hpp, which can be tested u
 
 You must have the [Google Test framework](https://code.google.com/p/googletest/) installed in order to run these tests.
 
-NOTE: Google recommends just dropping the test framework directory within the directory of the project you wish to test, so in this case, you would put "gtest-1.7.0" (or similar) into the Waveform/ directory.
+NOTE: Google recommends just placing the test framework directory within the directory of the project you wish to test -- so in this case, you would put "gtest-1.7.0" (or similar) into the Waveform/ directory.
 
 IMPORTANT: Not all tests will pass necessarily, I've put explicit failures into the test files to remind myself and users that there are still features which I must implement.
 
@@ -100,11 +106,11 @@ Using typedefs to shorten the instantiation is recommended (see examples for how
 
 | Constructor Name | Constructor Call | Parameter Names | Description |
 | ---------------: | :--------------- | --------------- | :---------- |
-| Default constructor			| `Waveform ()`;							| <none> | The default constructor is disallowed |
-| Fill constructor				| `Waveform (size_t n)`;					| `x` is the size of the time domain array | Fill constructor |
-| Copy constructor				| `Waveform (const Waveform& x)`;			| `x` is the Waveform to copy | Copy constructor |
-| Time domain copy constructor	| `Waveform (const TimeContainer& x)`;	| `x` is the time domain container to copy | Time domain copy constructor |
-| Freq domain copy constructor	| `Waveform (const FreqContainer& x)`;	| `x` is the freq domain container to copy | Freq domain copy constructor |
+| Default constructor			| ~~`Waveform ()`;~~							| <none> | The default constructor is disallowed because the size of the `Waveform` is needed to construct many transform objects, such as `FftwTransform`s |
+| Fill constructor				| `Waveform (size_t n)`;					| `x` is the size of the time domain array | Constructs a `Waveform` container with `n` elements. |
+| Copy constructor				| `Waveform (const Waveform& x)`;			| `x` is the Waveform to copy | Constructs a `Waveform` container with a copy of each of the elements of both domains in `x`, in the same order. |
+| Time domain copy constructor	| `Waveform (const TimeContainer& x)`;	| `x` is the time domain container to copy | Constructs a `Waveform` container with the time domain being a copy of each of the elements in `x`. |
+| Freq domain copy constructor	| `Waveform (const FreqContainer& x)`;	| `x` is the freq domain container to copy | Constructs a `Waveform` container with the freq domain being a copy of each of the elements in `x`. |
 
 #### Member Functions
 
@@ -116,11 +122,54 @@ Using typedefs to shorten the instantiation is recommended (see examples for how
 - `GetFreqSpectrum()`
 - `ValidateDomain()`
 
-<!---
+
 ### Types of Transforms
 
-To be written.
--->
+Transform objects are what make the Waveform containers do the mathematical transforms.
+
+#### Currently Supported
+- `IdentityTransform` -- the two domains of the Waveform are always identical. Not particularly useful except for in testing
+- `Fftw3_Dft_1d` -- based on fftw_plan_dft_r2c_1d and _c2r_1d
+- `Fftw3_Dft_1d_Normalized` -- like Fftw3_Dft_1d but [normalized](http://www.fftw.org/doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029)
+
+#### Eventual Support
+
+For FFTW "Plans":
+
+| Transform Name | Forward Plan Name | Inverse Plan Name | First Domain | Second Domain |
+| -------------- | ----------------- | ----------------- | ------------ | ------------- |
+| Fftw3_Dft_1d | fftw_plan_dft_1d | fftw_plan_dft_1d | complex 1D array | complex 1D array |
+| Fftw3_Dft_2d | fftw_plan_dft_2d | fftw_plan_dft_2d | complex 2D array | complex 2D array |
+| Fftw3_Dft_3d | fftw_plan_dft_3d | fftw_plan_dft_3d | complex 3D array | complex 3D array |
+| Fftw3_Dft_r2c_2d | fftw_plan_dft_r2c_2d | fftw_plan_dft_c2r_2d | real 2D array | complex 2D array |
+| Fftw3_Dft_r2c_3d | fftw_plan_dft_r2c_3d | fftw_plan_dft_c2r_3d | real 3D array | complex 3D array |
+| Fftw3_Dft_r2c | fftw_plan_dft_r2c | fftw_plan_dft_c2r | real N-D array | complex N-D array |
+| Fftw3_r2r_1d | fftw_plan_r2r_1d | fftw_plan_r2r_1d | Real 1D array | Real 1D array |
+| Fftw3_r2r_2d | fftw_plan_r2r_2d | fftw_plan_r2r_2d | Real 2D array | Real 2D array |
+| Fftw3_r2r_3d | fftw_plan_r2r_3d | fftw_plan_r2r_3d | Real 3D array | Real 3D array |
+| Fftw3_r2r | fftw_plan_r2r | fftw_plan_r2r | Real N-D array | Real N-D array |
+
+Note that fftw supports many varieties of r2r transforms, parameterized by the `fftw_r2r_kind` type.
+
+More information here: http://www.fftw.org/doc/More-DFTs-of-Real-Data.html#More-DFTs-of-Real-Data
+
+Useful kinds include:
+
+| fftw_r2r_kind	name | Description |
+| ------------------ | ----------- |
+| FFTW_R2HC	| Real to "Halfcomplex" output -- Like dft_r2c but sometimes faster |
+| FFTW_HC2R	| Halfcomplex to Real -- different output than dft_c2r |
+| FFTW_DHT | Discrete Hartley transform |
+| FFTW_REDFT00 | (DCT-I): even around j=0 and even around j=n-1 |
+| FFTW_REDFT10 | (DCT-II, “the” DCT): even around j=-0.5 and even around j=n-0.5. |
+| FFTW_REDFT01 | (DCT-III, “the” IDCT): even around j=0 and odd around j=n. |
+| FFTW_REDFT11 | (DCT-IV): even around j=-0.5 and odd around j=n-0.5. |
+| FFTW_RODFT00 | (DST-I): odd around j=-1 and odd around j=n. |
+| FFTW_RODFT10 | (DST-II): odd around j=-0.5 and odd around j=n-0.5. |
+| FFTW_RODFT01 | (DST-III): odd around j=-1 and even around j=n-1. |
+| FFTW_RODFT11 | (DST-IV): odd around j=-0.5 and even around j=n-0.5. |
+
+The r2r kinds for the various REDFT and RODFT types supported by FFTW, along with the boundary conditions at both ends of the input array (n real numbers in[j=0..n-1]), are: 
 
 ### Examples
 Some examples to help show how this library can be used.
