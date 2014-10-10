@@ -6,10 +6,11 @@
 #include <fftw3.h>
 #include <boost/range.hpp>
 
+#include <TransformTypes.hpp>
 
 //#define NORMALIZE_INVERSE 1
 
-#define FFTWTRANSFORM_USE_INIT 1
+//#define FFTWTRANSFORM_USE_INIT 1
 
 /*
 	Things / Features to keep in mind:
@@ -153,7 +154,10 @@ namespace Waveform {
 namespace Transform {
 
 class Fftw3_Dft_1d {
-	private:
+  public:
+  	typedef InverseTypes::ScaledInverse inverse_type;
+	
+  private:
 
 	fftw_plan forwardPlan;
 	fftw_plan inversePlan;
@@ -169,6 +173,7 @@ class Fftw3_Dft_1d {
 
 	 */
 
+	/*
 	template <typename Iterator1, typename Iterator2>
 	void
 	init_ (Iterator1 first1, Iterator1 last1, Iterator2 first2)
@@ -183,7 +188,7 @@ class Fftw3_Dft_1d {
 											, &(*first1)
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
 	}
-
+	*/
 
 	public:
 
@@ -214,7 +219,6 @@ class Fftw3_Dft_1d {
 	//!	Iterator bounds constructor
 	template <typename Iterator1, typename Iterator2>
 	Fftw3_Dft_1d (Iterator1 first1, Iterator1 last1, Iterator2 first2)
-#ifndef FFTWTRANSFORM_USE_INIT
 		: forwardPlan( fftw_plan_dft_r2c_1d ( std::distance(first1, last1)
 											, &(*first1)
 											, reinterpret_cast<fftw_complex*>(&(*first2))
@@ -225,31 +229,43 @@ class Fftw3_Dft_1d {
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT) )
 
 	{ }
-#else
-	{
-		init_(first1, last1, first2);
-	}
-#endif
 
 
 	//!	Boost::range constructor (Random Access Range)
 	template <typename RandomAccessRange1, typename RandomAccessRange2>
 	Fftw3_Dft_1d (RandomAccessRange1& range1, RandomAccessRange2& range2)
-#ifndef FFTWTRANSFORM_USE_INIT
-		: forwardPlan( fftw_plan_dft_r2c_1d ( boost::distance(range1)
-											, &(*boost::begin(range1))
-											, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
-											, FFTW_ESTIMATE) )
-		, inversePlan( fftw_plan_dft_c2r_1d ( boost::distance(range1)
-											, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
-											, &(*boost::begin(range1))
-											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT) )
-	{ }
-#else
+		: Fftw3_Dft_1d (boost::begin(range1), boost::end(range1), boost::begin(range2))
 	{
-		init_(boost::begin(range1), boost::end(range1), boost::begin(range2));
+	
 	}
-#endif
+
+
+	Fftw3_Dft_1d (const Fftw3_Dft_1d& to_copy)
+		: forwardPlan(to_copy.forwardPlan)
+		, inversePlan(to_copy.inversePlan)
+	{
+
+	}
+
+	/*!
+	 *	The maybe-copy constructor
+	 *
+	 *	There are cases when the constructor is expensive but reliant on
+	 *	different data ranges.
+	 *
+	 *	This copies if the range is fine, otherwise does not.
+	 *
+	 *
+	template <typename RandomAccessRange1, typename RandomAccessRange2>
+	Fftw3_Dft_1d (const Fftw3_Dft_1d& to_copy
+					, RandomAccessRange1& range1
+					, RandomAccessRange2& range2)
+		: forwardPlan(to_copy.forwardPlan)
+		, inversePlan(to_copy.inversePlan)
+	{
+
+	}
+	*/
 
 
 	~Fftw3_Dft_1d (void)
@@ -273,14 +289,17 @@ class Fftw3_Dft_1d {
 
 
 class Fftw3_Dft_1d_Normalized {
-	private:
+  public:
+	typedef InverseTypes::Inverse inverse_type;
+
+  private:
 
 //	fftw_plan forwardPlan;
 //	fftw_plan inversePlan;
 
 	//std::complex<double>*	first_;
 	fftw_complex*	first_;
-	std::size_t				length_;
+	std::size_t		length_;
 	fftw_complex*	last_;
 	//std::complex<double>*	last_;
 
@@ -299,28 +318,6 @@ class Fftw3_Dft_1d_Normalized {
 
 	 */
 
-	template <typename Iterator1, typename Iterator2>
-	void
-	init_ (Iterator1 first1, Iterator1 last1, Iterator2 first2)
-	{
-		first_ = &(*first2);
-		length_ = std::distance(first1, last1);
-		last_ = &(*(first2 + length_ / 2 + 1));
-		
-		forwardPlan = fftw_plan_dft_r2c_1d  ( length_
-											, &(*first1)
-											, first_
-											//, reinterpret_cast<fftw_complex*>(&(*first2))
-											, FFTW_ESTIMATE);
-
-		inversePlan = fftw_plan_dft_c2r_1d  ( length_
-											, first_
-											//, reinterpret_cast<fftw_complex*>(&(*first2))
-											, &(*first1)
-											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
-
-
-	}
 
 
 	public:
@@ -352,7 +349,6 @@ class Fftw3_Dft_1d_Normalized {
 	//!	Iterator bounds constructor
 	template <typename Iterator1, typename Iterator2>
 	Fftw3_Dft_1d_Normalized (Iterator1 first1, Iterator1 last1, Iterator2 first2)
-#ifndef FFTWTRANSFORM_USE_INIT
 		: first_(first2)
 		, length_(std::distance(first1, last1))
 		, last_(first_ + length_ / 2 + 1)
@@ -368,36 +364,13 @@ class Fftw3_Dft_1d_Normalized {
 											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT) )
 
 	{ }
-#else
-	{
-		init_(first1, last1, first2);
-	}
-#endif
 
 
 	//!	Boost::range constructor (Random Access Range)
 	template <typename RandomAccessRange1, typename RandomAccessRange2>
 	Fftw3_Dft_1d_Normalized (RandomAccessRange1& range1, RandomAccessRange2& range2)
-#ifndef FFTWTRANSFORM_USE_INIT
-		: first_(boost::begin(range2))
-		, length_(boost::distance(range1))
-		, last_(boost::end(range2))
-		, forwardPlan( fftw_plan_dft_r2c_1d ( length_
-											, &(*boost::begin(range1))
-											, first_
-											//, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
-											, FFTW_ESTIMATE) )
-		, inversePlan( fftw_plan_dft_c2r_1d ( length_
-											, first_
-											//, reinterpret_cast<fftw_complex*>(&(*boost::begin(range2)))
-											, &(*boost::begin(range1))
-											, FFTW_ESTIMATE | FFTW_PRESERVE_INPUT) )
+		: Fftw3_Dft_1d_Normalized(boost::begin(range1), boost::end(range1), boost::begin(range2))
 	{ }
-#else
-	{
-		init_(boost::begin(range1), boost::end(range1), boost::begin(range2));
-	}
-#endif
 
 
 	~Fftw3_Dft_1d_Normalized (void)

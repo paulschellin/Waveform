@@ -21,6 +21,8 @@
 //#include <iomanip>
 //#include <sstream>
 
+#include <type_traits>
+
 
 // Boost header files
 
@@ -40,7 +42,17 @@
 
 //! Namespace PS is the namespace used for classes, etc. created by the author (Paul Schellin)
 namespace PS {
-		
+
+	/*
+	namespace InverseTypes {
+		struct Inverse {};
+
+		struct ScaledInverse {};
+
+		struct Other {};
+	}
+	*/
+
 	//!	PlaceholderTransformClass: Defines the minimum interface for a transform class.
 	/*!
 	 *	This class outlines the interface needed by some transform class.
@@ -60,6 +72,9 @@ namespace PS {
 	 */
 	class PlaceholderTransformClass {
 	  public:
+
+		typedef InverseTypes::Other inverse_type;
+
 		//!	Iterator bounds constructor
 		template <typename Iterator1, typename Iterator2>
 		PlaceholderTransformClass (Iterator1 first1, Iterator1 last1, Iterator2 first2)
@@ -167,12 +182,14 @@ namespace PS {
 		 *
 		 *
 		 */
-		enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};
-		
+		//enum DomainSpecifier {TimeDomain, FreqDomain, EitherDomain};
+		enum class Domain {Time, Freq, Either};
+
 	  private:
 
 		//!	Indicates the valid domain array(s)
-		DomainSpecifier				validDomain_;
+		//DomainSpecifier				validDomain_;
+		Domain			validDomain_;
 
 		//!	Container object for the time series array
 		TimeContainer	timeSeries_;
@@ -204,7 +221,8 @@ namespace PS {
 		
 		//! Fill constructor
 		Waveform(const std::size_t count)
-			: validDomain_(EitherDomain)
+			//: validDomain_(EitherDomain)
+			: validDomain_(Domain::Either)
 			, timeSeries_(count)
 			, freqSpectrum_(count)
 			, transform_(timeSeries_, freqSpectrum_)
@@ -215,20 +233,25 @@ namespace PS {
 
 
 		//! Copy constructor
-		explicit Waveform(const Waveform& toCopy)
+		explicit
+		Waveform(const Waveform& toCopy)
 			: validDomain_(toCopy.validDomain_)
 			, timeSeries_(toCopy.timeSeries_)
 			, freqSpectrum_(toCopy.freqSpectrum_)
-			, transform_(timeSeries_, freqSpectrum_)
+			//, transform_(timeSeries_, freqSpectrum_)
+			, transform_ (toCopy.transform_)
 		{
 			if (timeSeries_.size()%2)
 				throw std::length_error("Waveform: The array length was not a multiple of 2!");
 		}
 		
 		
+
+		
 		//! Time domain copy constructor
 		explicit Waveform(const TimeContainer& toCopy)
-			: validDomain_(TimeDomain)
+			//: validDomain_(TimeDomain)
+			: validDomain_(Domain::Time)
 			, timeSeries_(toCopy)
 			, freqSpectrum_(timeSeries_.size()/2 + 1)
 			, transform_(timeSeries_, freqSpectrum_)
@@ -239,7 +262,8 @@ namespace PS {
 		
 		//! Frequency domain copy constructor
 		explicit Waveform(const FreqContainer& toCopy)
-			: validDomain_(FreqDomain)
+			//: validDomain_(FreqDomain)
+			: validDomain_(Domain::Freq)
 			, timeSeries_((toCopy.size() - 1) * 2)
 			, freqSpectrum_(toCopy)
 			, transform_(timeSeries_, freqSpectrum_)
@@ -283,7 +307,8 @@ namespace PS {
 		 */
 		const TimeContainer&
 		GetConstTimeSeries (void)
-		{ ValidateDomain(EitherDomain); return timeSeries_; }
+		//{ ValidateDomain(EitherDomain); return timeSeries_; }
+		{ ValidateDomain(Domain::Either); return timeSeries_; }
 		
 
 		//!	Returns constant reference to the frequency domain container
@@ -298,7 +323,8 @@ namespace PS {
 		 */
 		const FreqContainer&
 		GetConstFreqSpectrum (void)
-		{ ValidateDomain(EitherDomain); return freqSpectrum_; }
+		//{ ValidateDomain(EitherDomain); return freqSpectrum_; }
+		{ ValidateDomain(Domain::Either); return freqSpectrum_; }
 		
 
 		//!	Returns mutable reference to the time domain container
@@ -309,7 +335,8 @@ namespace PS {
 		 */
 		TimeContainer&
 		GetTimeSeries (void)
-		{ ValidateDomain(TimeDomain); return timeSeries_; }
+		//{ ValidateDomain(TimeDomain); return timeSeries_; }
+		{ ValidateDomain(Domain::Time); return timeSeries_; }
 		
 
 		//!	Returns mutable reference to the frequency domain container
@@ -320,7 +347,8 @@ namespace PS {
 		 */
 		FreqContainer&
 		GetFreqSpectrum (void)
-		{ ValidateDomain(FreqDomain); return freqSpectrum_; }
+		//{ ValidateDomain(FreqDomain); return freqSpectrum_; }
+		{ ValidateDomain(Domain::Freq); return freqSpectrum_; }
 		
 		
 
@@ -447,19 +475,20 @@ namespace PS {
 		 *	both.
 		 */
 		int
-		ValidateDomain (const DomainSpecifier toValidate)
+		//ValidateDomain (const DomainSpecifier toValidate)
+		ValidateDomain (const Domain toValidate)
 		{
-			if (toValidate == validDomain_ || validDomain_ == EitherDomain) {
+			if (toValidate == validDomain_ || validDomain_ == Domain::Either) {
 				//	There aren't any transforms to be performed
 			}
-			else if (toValidate == TimeDomain) {
+			else if (toValidate == Domain::Time) {
 				transform_.exec_inverse_transform();
 			}
-			else if (toValidate == FreqDomain) {
+			else if (toValidate == Domain::Freq) {
 				transform_.exec_transform();
 			}
-			else if (toValidate == EitherDomain) {
-				if (validDomain_ == TimeDomain) {
+			else if (toValidate == Domain::Either) {
+				if (validDomain_ == Domain::Time) {
 					transform_.exec_transform();
 				} else // if (validDomain_ == FreqDomain)
 				{
@@ -559,11 +588,29 @@ namespace PS {
 		{
 			swap(*this, rhs);
 		}
+
+		Waveform(const Waveform&& rhs)
+			: Waveform()
+		{
+			swap(*this, rhs);
+		}
+
 		
-	};
+//	};
 
-
+	
+	//!	Equality operator
+	/*!
+	 *	This checks that the valid domains of two waveforms are equal.
+	 *	
+	 *	If the two waveforms have some valid domain which is in common,
+	 *	it will compare those common domains.
+	 *
+	 *	If two waveforms are of opposite domains, it will pick one to convert.
+	 *	No transforms are done otherwise.
+	 */
 	template <typename ...Args1, typename ...Args2>
+	friend
 	inline bool
 	operator==(const Waveform<Args1...>& lhs, const Waveform<Args2...>& rhs)
 	{
@@ -574,16 +621,66 @@ namespace PS {
 		//	the valid domain doesn't require a transform. 
 		//	However, that would require either this function to be a friend function or
 		//	for the validDomain_ variable to be made public.
-		return lhs.GetTimeSeries() == rhs.GetTimeSeries() && lhs.GetFreqSpectrum() == rhs.GetFreqSpectrum();
+		
+		if (lhs.validDomain_ == Domain::Either)
+		{
+			if (rhs.validDomain_ == Domain::Either)
+			{
+				return lhs.GetTimeSeries() == rhs.GetTimeSeries() && lhs.GetFreqSpectrum() == rhs.GetFreqSpectrum();
+			}
+			else
+			if (rhs.validDomain_ == Domain::Time)
+			{
+				return (lhs.GetTimeSeries() == rhs.GetTimeSeries());
+			}
+			else	//	Else rhs.validDomain_ == Domain::Freq
+			{
+				return (lhs.GetFreqSpectrum() == rhs.GetFreqSpectrum());
+			}
+		}
+		else
+		if (lhs.validDomain_ == Domain::Time)
+		{
+			return (lhs.GetTimeSeries() == rhs.GetTimeSeries());
+		}
+		else
+		if (lhs.validDomain_ == Domain::Freq)
+		{
+			return (lhs.GetFreqSpectrum() == rhs.GetFreqSpectrum());
+		}
+
+
+		//return lhs.GetTimeSeries() == rhs.GetTimeSeries() && lhs.GetFreqSpectrum() == rhs.GetFreqSpectrum();
 	}
 
 	template <typename ...Args1, typename ...Args2>
+	friend
 	inline bool
 	operator!=(const Waveform<Args1...>& lhs, const Waveform<Args2...>& rhs)
 	{
 		return !(lhs == rhs);
 	}
 
+
+
+
+	/*
+
+	std::enable_if<std::is_same(transform_::inverse_type, InverseTypes::Inverse)::value, Waveform&>::type
+	//Waveform&
+	operator*= (TimeContainer& rhs)
+	{
+		//if (std::is_same(transform_::inverse_type, InverseTypes::Inverse)::value)
+		
+		this->GetTimeSeries() *= rhs.GetTimeSeries();
+		return *this;
+	}
+	*/
+
+
+
+
+	};
 
 	
 } // End of namespace PS
